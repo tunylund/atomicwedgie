@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Atomic-Wedgie</title>
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link href="css/lobby.css" media="screen" rel="stylesheet" type="text/css">
+    <link href="css/grid.css" media="screen" rel="stylesheet" type="text/css">
+  </head>
+  <body class="center">
+
+    <div class="container">
+
+      <h1>Atomic Wedgie<i id="wedgie" class="wedgie"></i></h1><br>
+      
+      <div class="grid_6">
+        <p>
+          Atomic wedgie was an awesome school project by a bunch of humble but
+          enthusiastic college guys. The game was awed and gazed upon with 
+          both pride and jealousy. How could such an extreme awesomeness exist?
+        </p>
+
+        <p>
+          This is a remake of that oldie but goodie experience. Creted with the
+          hyped technologies of 2012: <a href="https://www.google.fi/search?q=javascript">javascript</a>, <a href="http://nodejs.org/">node.js</a>, <a href="http://www.html5rocks.com">html5</a>, <a href="http://socket.io/">websockets</a> and <a href="http://theoatmeal.com/comics/coffee">coffee</a> (not coffeescript though).
+        </p>
+
+        <p class="sign">
+          - <em><a href="http://www.linkedin.com/pub/tuomas-nylund/4/517/5a4">Tuomas Nylund</a></em>
+        </p>
+
+      </div>
+
+      <div class="grid_6">
+        <p>
+          <label>Choose your character:</label><br>
+          <label>
+            <input type="radio" name="color" value="green">
+            <i class="man green"></i>
+          </label>
+          <label>
+            <input type="radio" name="color" value="blue">
+            <i class="man blue"></i>
+          </label>
+          <label>
+            <input type="radio" name="color" value="orange">
+            <i class="man orange"></i>
+          </label>
+          <label>
+            <input type="radio" name="color" value="brown">
+            <i class="man brown"></i>
+          </label>
+          <label>
+            <input type="radio" name="color" value="purple">
+            <i class="man purple"></i>
+          </label>
+          <label>
+            <input type="radio" name="color" value="yellow">
+            <i class="man yellow"></i>
+          </label><br>
+          <span class="taken-info"><span>*</span> the color is already in play.</span>
+        </p>
+
+        <p>
+          <label for="name">What is your nickname:</label><br>
+          <input type="text" id="name" name="name" autofocus="true">
+        </p>
+
+        <p>
+          <a id="join" class="button" href="javascript:">Join the game</a>
+        </p>
+
+        <span id="runtime" class="taken-info"></span>
+
+      </div>
+
+    </div>
+    <script src="lib/jquery-1.8.3.min.js"></script>    
+    <script src="js/lobby.js"></script>
+  </body>
+</html>

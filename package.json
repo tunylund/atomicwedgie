@@ -1,0 +1,17 @@
+{
+  "name"          : "atomic-wedgie",
+  "description"   : "Awesome wedgienaut",
+  "homepage"      : "atomic-wedgie-tunylund.dotcloud.com",
+  "keywords"      : ["game", "websocket", "js", "javascript", "wedgies"],
+  "author"        : "Tuomas Nylund <tunylund@gmail>",
+  "contributors"  : [],
+  "licenses"      : [],
+  "dependencies"  : {
+    "node-static"      : "0.7.0", 
+    "socket.io"        : "0.9.15"
+  },
+  "version"       : "0.1.0",
+  "private"       : true,
+  "engines"       : { "node": ">= 0.10.13" },
+  "scripts"       : { "start": "NODE_ENV=production node server.js" }
+}

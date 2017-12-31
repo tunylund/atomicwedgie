@@ -1,0 +1,272 @@
+html, body {
+  font: 18px/27px Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+h1, h2, h3, h4 { font-family: 'Federo', sans-serif; text-shadow: 1px 1px 1px white;}
+h1 { font-size: 5em /*60px/68px;*/; line-height: 1em; margin: 0; } /* 80px */
+h2 { font-size: 50px/57px; }
+h3 { font-size: 40px/47px; }
+h4 { font-size: 30px/37px; }
+
+html {
+  background: #333;
+  color: #333; 
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+@media (min-width: 481px) {
+  html, body {
+    height: 100%;
+  }
+  .center {
+    /* Firefox */
+    display:-moz-box;
+    -moz-box-orient:horizontal;
+    -moz-box-pack:center;
+    -moz-box-align:center;
+
+    /* Safari and Chrome */
+    display:-webkit-box;
+    -webkit-box-orient:horizontal;
+    -webkit-box-pack:center;
+    -webkit-box-align:center;
+
+    /* W3C */
+    display:box;
+    box-orient:horizontal;
+    box-pack:center;
+    box-align:center;
+  }
+
+  #enchant-stage {
+    /*webkit only*/
+    -webkit-box-shadow: 0 0 10px #111;
+  }
+
+}
+
+.msg {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+body canvas {
+  position: relative;
+}
+
+#lag {
+  bottom: 0;
+  font-size: 11px;
+  position: absolute;
+  right: 20px;
+}
+#lag,
+#lag a {
+  color: #eee;
+  text-shadow: -1px -1px #222;
+}
+
+a,
+a:visited {
+  color: #00f;
+}
+
+i {
+  display: inline-block;
+  width: 25px;
+  height: 25px;
+  background: no-repeat center;
+  vertical-align: middle;
+  padding: 0 4px;
+}
+i.wedgie {
+  background-image: url('/img/staticons/wedgies.gif');
+}
+i.banzai {
+  background-image: url('/img/staticons/banzais.gif');
+}
+i.death {
+  background-image: url('/img/staticons/deathcount.gif');
+}
+i.score {
+  background-image: url('/img/staticons/points.gif');
+}
+.activeTextList {
+  position: absolute;
+  bottom: 5%;
+  left: 15px;
+  color: #fff;
+  line-height: 1;
+}
+.activeTextList > div {
+  opacity: 1;
+  -webkit-transition: opacity 15s;
+  -moz-transition: opacity 15s;
+  -ms-transition: opacity 15s;
+  -o-transition: opacity 15s;
+  transition: opacity 15s;
+}
+.activeTextList > div.hidden {
+  opacity: 0;
+}
+.scoreLabel {
+  color: white;
+  line-height: 1;
+  position: absolute;
+}
+.scoreTable {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  background: url(/img/menu-backgrounds/stats.bmp) center center;
+  background-size: 100%;
+}
+.scoreTable .timeLabel {
+  position: relative;
+  width: 100%;
+  text-align: center;
+}
+.scoreTable .scores {
+  width: 50%;
+  padding: 25% 25% 0;
+  text-align: left;
+  color: white;
+}
+.scoreTable .scores > div {
+  padding-left: 32px;
+  margin-bottom: 5px;
+  background: left center no-repeat;
+}
+.scoreTable .scores > .green { background-image: url('/img/players/walk/man1_1.png'); }
+.scoreTable .scores > .blue  { background-image: url('/img/players/walk/man2_1.png'); }
+.scoreTable .scores > .orange{ background-image: url('/img/players/walk/man3_1.png'); }
+.scoreTable .scores > .brown { background-image: url('/img/players/walk/man4_1.png'); }
+.scoreTable .scores > .purple{ background-image: url('/img/players/walk/man5_1.png'); }
+.scoreTable .scores > .yellow{ background-image: url('/img/players/walk/man6_1.png'); }
+
+.scoreTable .scores .name {
+  width: 160px;
+}
+.scoreTable .scores > div > div {
+  display: inline-block;
+  width: 50px;
+  position: relative;
+  display: inline-block;
+  min-width: 50px;
+}
+.scoreTable div.score {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.touchPad {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: url(/img/pad.png);
+  right: 0;
+  bottom: 0;
+}
+.touchArrows {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 304px;
+  height: 199px;
+}
+.touchButton.up {
+  right: 101px;
+  bottom: 101px;
+}
+.touchButton.down {
+  right: 101px;
+}
+.touchButton.left {
+  left: 0;
+}
+.touchButton.right {
+  right: 0;
+}
+.touchButton {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border: solid 1px #fff;
+  border-radius: 4px;
+  bottom: 0;
+  text-align: center;
+  color: #fff;
+  line-height: 100px;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.touchButton.active {
+  background: rgba(0, 0, 0, 0.2);
+}
+.touchButton.a {
+  left: 105px;
+}
+.touchButton.b {
+  left: 0;
+}
+
+.floorMap {
+  position: absolute;
+  background-repeat: repeat;
+  border-color: transparent;
+  background-clip: content-box;
+}
+
+.insult {
+  position: absolute;
+  top: 40%;
+  color: #D00;
+  font-size: 28px;
+  font-weight: bold;
+  text-shadow: 1px 1px #888;
+  text-align: center;
+  width: 70%;
+  padding: 0 15%;
+}
+.quote {
+  position: absolute;
+  top: 50%;
+  color: #DDD;
+  font-size: 16px;
+  text-align: center;
+  width: 70%;
+  padding: 0 15%;
+  -webkit-animation: fadeInDownOutUp 5s;
+  -moz-animation: fadeInDownOutUp 5s;
+  animation: fadeInDownOutUp 5s;
+}
+@-webkit-keyframes fadeInDownOutUp {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@-moz-keyframes fadeInDownOutUp {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes fadeInDownOutUp {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
