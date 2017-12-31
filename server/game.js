@@ -28,7 +28,7 @@ function endGame() {
   gameEnded = true
   scores = {}
   for(let i in players.hash) {
-    var player = players.hash[i]
+    let player = players.hash[i]
     scores[player.id] = player.scores()
   }
   nextGameAt = new Date().getTime() + nextGameIn
@@ -61,6 +61,102 @@ function emitEndGame(player) {
   })
 }
 
+function handleJoinRequest(request, player) {
+  player = player || request;
+  request = request || {color: "green", name: "Anonyymy lyyli"};
+  player.name = request.name
+  player.color = request.color
+  console.log("joinrequest from " + player.name);
+  
+  player.client.json.emit('join', {
+    player: player.toJson(),
+    enemies: players.allbut({
+      id: player.id
+    }).toJson()
+  });
+  player.client.broadcast.json.emit("enemyJoin", player.toJson());
+
+  emitNewGame(player)
+  if(gameEnded) {
+    emitEndGame(player)
+  }
+
+}
+
+function wedgie(victimId, player) {
+  if(gameEnded) return;
+  const victim = players.hash[victimId];
+  if(isWedgieable(victim, player)) {
+    victim.wedgie(player);
+    victim.deathCount++
+    player.wedgieCount++
+    player.score += 5
+    player.client.json.emit("score", player.scores());
+    victim.client.broadcast.emit("text", texts.wedgie(victim, player));
+  }
+}
+
+function banzai(victimId, player) {
+  if(gameEnded) return;
+  const victim = players.hash[victimId];
+  if(isBanzaiable(victim, player)) {
+    victim.banzai(player);
+    if(!victim.wedgied) {
+      victim.deathCount++
+      player.banzaiCount++
+      player.score += 2
+      player.client.json.emit("score", {
+        wedgieCount: player.wedgieCount,
+        banzaiCount: player.banzaiCount
+      });
+    }
+    victim.client.broadcast.emit("text", texts.banzai(victim, player));
+  }
+}
+
+function consumePill(pillId, player) {
+  if(gameEnded) return;
+  map.consumePill(pillId, player)
+}
+
+function handleMessage(message, player) {
+  switch(message) {
+    case "getLag":
+      let now = new Date(),
+          lag = now.getTime() + now.getTimezoneOffset()*60000,
+          updateLag = 0;
+      player.client.json.emit("lagCheck", {
+        lag: lag
+      });
+      break;
+  }
+}
+
+function disconnect(player) {
+  console.log("disconnect from " + player.name);
+  player.client.broadcast.emit("enemyDisconnect", player.id);
+  
+  player.remove()
+  players.remove(player);
+  
+  if(players.length == 0) {
+    map.remove()
+    map = null
+    clearTimeout(endGameTimeout)
+    clearTimeout(newGameTimeout)
+  }
+}
+
+function isWedgieable(victim, player) {
+  return !victim.wedgied && !victim.banzaid && victim.id != player.id
+}
+
+function isBanzaiable(victim, player) {
+  return !victim.banzaid 
+      && !victim.pillEffects["red"]
+      && victim.id != player.id
+}
+
 exports.game = {
 
   get players () {
@@ -88,127 +184,15 @@ exports.game = {
       initNewGame();
     }
   
-    let player = new Player(client)
-    player.game = this
+    let player = new Player(client, () => map.getSpawnPoint())
     players.push(player);
-    client.on('joinRequest', u.proxy(this.onJoinRequest, this, player));
-    client.on('update', u.proxy(player.update, player));
-    client.on('wedgie', u.proxy(this.onWedgie, this, player));
-    client.on('banzai', u.proxy(this.onBanzai, this, player));
-    client.on('consumePill', u.proxy(this.onConsumePill, this, player))
-    client.on('message', u.proxy(this.onMessage, this, player));
-    client.on('disconnect', u.proxy(this.onDisconnect, this, player));
-  },
-
-  text: function(text, player) {
-    player.client.broadcast.emit("text", text);
-    player.client.emit("text", text);
-  },
-
-  onJoinRequest: function(request, player) {
-    player = player || request;
-    request = request || {color: "green", name: "Anonyymy lyyli"};
-    player.name = request.name
-    player.color = request.color
-    console.log("joinrequest from " + player.name);
-    
-    player.client.json.emit('join', {
-      player: player.toJson(),
-      enemies: players.allbut({
-        id: player.id
-      }).toJson()
-    });
-    player.client.broadcast.json.emit("enemyJoin", player.toJson());
-
-    emitNewGame(player)
-    if(gameEnded) {
-      emitEndGame(player)
-    }
-
-  },
-  
-  onMessage: function(message, player) {
-    switch(message) {
-      case "getLag":
-        var now = new Date(),
-            lag = now.getTime() + now.getTimezoneOffset()*60000,
-            updateLag = 0;
-        player.client.json.emit("lagCheck", {
-          lag: lag
-        });
-        break;
-    }
-  },
-  
-  onWedgie: function(victimId, player) {
-    if(gameEnded) return;
-    var victim = players.hash[victimId];
-    if(this.isWedgieable(victim, player)) {
-      victim.wedgie(player);
-      victim.deathCount++
-      player.wedgieCount++
-      player.score += 5
-      player.client.json.emit("score", player.scores());
-      victim.client.broadcast.emit("text", texts.wedgie(victim, player));
-    }
-  },
-
-  onBanzai: function(victimId, player) {
-    if(gameEnded) return;
-    var victim = players.hash[victimId];
-    if(this.isBanzaiable(victim, player)) {
-      victim.banzai(player);
-      if(!victim.wedgied) {
-        victim.deathCount++
-        player.banzaiCount++
-        player.score += 2
-        player.client.json.emit("score", {
-          wedgieCount: player.wedgieCount,
-          banzaiCount: player.banzaiCount
-        });
-      }
-      victim.client.broadcast.emit("text", texts.banzai(victim, player));
-    }
-  },
-
-  onConsumePill: function(pillId, player) {
-    if(gameEnded) return;
-    map.consumePill(pillId, player)
-  },
-  
-  onDisconnect: function(something, player) {
-    console.log("disconnect from " + player.name);
-    player.client.broadcast.emit("enemyDisconnect", player.id);
-    
-    player.remove()
-    players.remove(player);
-    
-    if(players.length == 0) {
-      map.remove()
-      map = null
-      clearTimeout(endGameTimeout)
-      clearTimeout(newGameTimeout)
-    }
-  },
-  
-  isWedgieable: function(victim, player) {
-    if(!victim.wedgied && !victim.banzaid && victim.id != player.id) {
-      return true;
-    /* collision check always lags behind the game
-      var col = player.getAbsCollision(player.strikeCollision);
-      var vcol = victim.getAbsCollision();
-      return (u.collides(col, vcol));
-      */
-    }
-    return false;
-  },
-
-  isBanzaiable: function(victim, player) {
-    if(!victim.banzaid 
-        && !victim.pillEffects["red"]
-        && victim.id != player.id) {
-      return true
-    }
+    client.on('joinRequest', (...args) => handleJoinRequest(...args, player));
+    client.on('update', (...args) => player.update(...args));
+    client.on('wedgie', (...args) => wedgie(...args, player));
+    client.on('banzai', (...args) => banzai(...args, player));
+    client.on('consumePill', (...args) => consumePill(...args, player))
+    client.on('message', (...args) => handleMessage(...args, player))
+    client.on('disconnect', () => disconnect(player))
   }
 
 };

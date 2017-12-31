@@ -16,16 +16,6 @@ exports.limit = function(v, max) {
   return v <= max ? v : max;
 }
 
-exports.proxy = function (fn, ctx) {
-  var args = Array.prototype.slice.call(arguments, 2);
-  var p = function() {
-    var a = Array.prototype.slice.call(arguments);
-    fn.apply(ctx, a.concat(args));
-  };
-  p.guid = fn.guid = exports.id();
-  return p;
-};
-
 exports.HashList = function () {
   this.arr = [];
   this.hash = {};

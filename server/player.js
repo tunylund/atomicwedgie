@@ -9,25 +9,19 @@ var turnSpeed = 10,
     wedgiedDuration = 3500,
     wedgieDirectionThreshold = 75 //255 max
 
-exports.Player = function (client) {
+exports.Player = class Player {
 
-  this.id = "player_" + u.id();
-  this.name = "";
-  /*
-  this.w = this.characterType.tileset.tilew;
-  this.hw = this.w/2;
-  this.h = this.characterType.tileset.tileh;
-  this.hh = this.h/2;
-  */
-  this.client = client || {on: u.voidfn, emit: u.voidfn, send: u.voidfn};
-  this.color = "green"
-  this.reset()
-  this.lagChecks = [];
-};
+  constructor (client, getSpawnPoint) {
+    this.getSpawnPoint = getSpawnPoint
+    this.id = "player_" + u.id()
+    this.name = ""
+    this.client = client || {on: u.voidfn, emit: u.voidfn, send: u.voidfn}
+    this.color = "green"
+    this.reset()
+    this.lagChecks = []
+  }
 
-exports.Player.prototype = {
-
-  reset: function() {
+  reset () {
     clearTimeout(this.clearDeathTimeout)
     for(var type in this.pillEffects) {
       clearTimeout(this.pillEffects[type].timeout)
@@ -48,9 +42,9 @@ exports.Player.prototype = {
       this.score =
       this.performingWedgie = 
       this.performingBanzai = 0
-  },
+  }
 
-  toJson: function() {
+  toJson () {
     return {
       id: this.id,
       name: this.name,
@@ -67,18 +61,18 @@ exports.Player.prototype = {
       performingWedgie: this.performingWedgie,
       speedMultiplier: this.speedMultiplier
     }
-  },
+  }
 
-  scores: function() {
+  scores () {
     return {
       wedgieCount: this.wedgieCount,
       banzaiCount: this.banzaiCount,
       deathCount: this.deathCount,
       score: this.score
     }
-  },
+  }
   
-  update: function(msg) {
+  update (msg) {
     if(this.isDead)
       return;
 
@@ -100,9 +94,9 @@ exports.Player.prototype = {
     }
     
     this.client.broadcast.emit("enemyUpdate", status);
-  },
+  }
 
-  getAbsCollision: function(col) {
+  getAbsCollision (col) {
     col = col || this.collision;
     return {
       x: this.x + col.x,
@@ -110,22 +104,17 @@ exports.Player.prototype = {
       w: col.w,
       h: col.h
     };
-  },
+  }
     
-  canPerformingWedgie: function() {
+  canPerformingWedgie () {
     return !this.banzaiMode && !this.performingWedgie && !this.wedgied && !this.banzaid;
-  },
+  }
   
-  canPerformingBanzai: function() {
+  canPerformingBanzai () {
     return this.banzaiMode && !this.performingBanzai && !this.wedgied && !this.banzaid;
-  },
+  }
 
-  clearDeath: function() {
-    this.wedgied = false
-    this.banzaid = false
-  },
-  
-  wedgie: function(enemy) {
+  wedgie (enemy) {
     this.wedgied = true
     this.banzaiMode = false
     this.performingBanzai = false
@@ -133,10 +122,10 @@ exports.Player.prototype = {
     this.client.emit("wedgie", enemy.id);
     this.client.broadcast.emit("enemyWedgie", this.id);
     clearTimeout(this.clearDeathTimeout)
-    this.clearDeathTimeout = setTimeout(u.proxy(this.clearDeath, this), wedgiedDuration)
-  },
+    this.clearDeathTimeout = setTimeout(() => this.clearDeath(), wedgiedDuration)
+  }
 
-  banzai: function(enemy) {
+  banzai (enemy) {
     this.banzaid = true
     this.banzaiMode = false
     this.performingBanzai = false
@@ -144,12 +133,12 @@ exports.Player.prototype = {
     this.client.emit("banzai", enemy.id);
     this.client.broadcast.emit("enemyBanzai", this.id);
     clearTimeout(this.clearDeathTimeout)
-    this.clearDeathTimeout = setTimeout(u.proxy(this.clearDeath, this), banzaidDuration)
-  },
+    this.clearDeathTimeout = setTimeout(() => this.clearDeath(), banzaidDuration)
+  }
 
-  clearDeath: function() {
+  clearDeath () {
     if(this.banzaid) {
-      var spawnPoint = this.game.map.getSpawnPoint()
+      var spawnPoint = this.getSpawnPoint()
       this.x = spawnPoint.x
       this.y = spawnPoint.y
     }
@@ -165,14 +154,14 @@ exports.Player.prototype = {
       x: this.x,
       y: this.y
     });
-  },
+  }
 
-  consumePill: function(pill) {
+  consumePill (pill) {
     pill.applyEffect(this)
     if(!this.pillEffects[pill.type])
       this.pillEffects[pill.type] = pill
     clearTimeout(this.pillEffects[pill.type].timeout)
-    this.pillEffects[pill.type].timeout = setTimeout(u.proxy(this.clearPillEffect, this, pill.type), pill.duration)
+    this.pillEffects[pill.type].timeout = setTimeout(() => this.clearPillEffect(pill.type), pill.duration)
     this.client.emit("consumePill", {
       playerId: this.id,
       pillId: pill.id
@@ -181,9 +170,9 @@ exports.Player.prototype = {
       playerId: this.id,
       pillId: pill.id
     })
-  },
+  }
 
-  clearPillEffect: function(type) {
+  clearPillEffect (type) {
     this.pillEffects[type].clearEffect(this)
     this.client.emit("clearPillEffect", {
       playerId: this.id,
@@ -194,13 +183,13 @@ exports.Player.prototype = {
       type: type
     })
     delete this.pillEffects[type]
-  },
+  }
 
-  remove: function() {
+  remove () {
     clearTimeout(this.clearDeathTimeout)
     for(var type in this.pillEffects) {
       clearTimeout(this.pillEffects[type].timeout)
     }
   }
   
-};
+}

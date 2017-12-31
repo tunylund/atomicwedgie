@@ -47,7 +47,7 @@ exports.Map.prototype = {
     this.maxPills = Math.ceil(this.map.tiles[0].length * this.map.tiles[0][0].length / (16))
     this.maxPills = this.maxPills < 3 ? 3 : this.maxPills
     this.pills = new u.HashList()
-    this.pillInterval = setInterval(u.proxy(this.checkPills, this), pillInterval)
+    this.pillInterval = setInterval(() => this.checkPills(), pillInterval)
   },
 
   remove: function() {
