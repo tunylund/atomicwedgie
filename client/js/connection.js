@@ -1,4 +1,4 @@
-define([], function() {
+define(['/socket.io/socket.io.js'], function(io) {
 
   var game
 

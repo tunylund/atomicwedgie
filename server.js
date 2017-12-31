@@ -49,15 +49,7 @@ var httpServer = http.createServer(function (req, res) {
 });
 httpServer.listen(port);
 
-var io = socketIO.listen(httpServer);
-io.sockets.on('connection', u.proxy(game.connect, game));
-io.configure(function (){
-  //https://github.com/LearnBoost/Socket.IO/wiki/Configuring-Socket.IO
-  io.set('transports', ['websocket', 'flashsocket']);
-  io.set('log level', 1);//error only
-  io.set('authorization', function (handshakeData, callback) {
-    callback(null, true); // error first callback style 
-  });
-});
+var io = socketIO(httpServer)
+io.sockets.on('connection', game.connect.bind(game));
 
 console.log('Server running at http://127.0.0.1:' + port + '/');
