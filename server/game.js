@@ -1,85 +1,96 @@
-var u = require('./utils.js'),
-    Player = require('./player.js').Player,
-    maps = require('./maps.js'),
-    texts = require('./texts.js')
+const u = require('./utils.js'),
+      Player = require('./player.js').Player,
+      maps = require('./maps.js'),
+      texts = require('./texts.js')
+
+const players = new u.HashList()
+let startTime = null
+let map = null
+const gameTime = (2*60 + 30)*1000 // 3min
+const nextGameIn = 15000
+let nextGameAt = new Date().getTime()
+let gameEnded = false
+let endGameTimeout = null
+let newGameTimeout = null
+let scores = {}
+
+function initNewGame() {
+  //map = new maps.Map(maps.maps[5], this);
+  map = new maps.Map(u.randomFrom(maps.maps), exports.game);
+  startTime = new Date().getTime()
+  endGameTimeout = setTimeout(endGame, gameTime)
+  for(let i in players.hash) {
+    emitNewGame(players.hash[i])
+  }
+}
+
+function endGame() {
+  gameEnded = true
+  scores = {}
+  for(let i in players.hash) {
+    var player = players.hash[i]
+    scores[player.id] = player.scores()
+  }
+  nextGameAt = new Date().getTime() + nextGameIn
+  for(let i in players.hash) {
+    emitEndGame(players.hash[i])
+  }
+  map.remove()
+  newGameTimeout = setTimeout(initNewGame, nextGameIn)
+}
+
+function emitNewGame(player) {
+  var _gameTime = startTime + gameTime - 2000 - new Date().getTime(),
+      spawnPoint = map.getSpawnPoint()
+  player.reset()
+  player.x = spawnPoint.x
+  player.y = spawnPoint.y
+  player.client.json.emit("newGame", {
+    gameTime: _gameTime < 0 ? 0 : _gameTime,
+    map: map.toJson(),
+    player: player.toJson()
+  })
+  player.client.json.broadcast.emit("enemyUpdate", player.toJson())
+}
+
+function emitEndGame(player) {
+  var t = nextGameAt - new Date().getTime() - 2000
+  player.client.json.emit("endGame", {
+    scores: scores,
+    nextGameIn: t < 0 ? 0 : t
+  })
+}
 
 exports.game = {
 
-  players: new u.HashList(),
-  startTime: null,
-  map: null,
-  gameTime: (2*60 + 30)*1000, // 3min
-  nextGameIn: 15000,
-  nextGameAt: new Date().getTime(),
-  
-  initNewGame: function() {
-    this.gameEnded = false
-    //this.map = new maps.Map(maps.maps[5], this);
-    this.map = new maps.Map(u.randomFrom(maps.maps), this);
-    this.startTime = new Date().getTime()
-    this.endGameTimeout = setTimeout(u.proxy(this.endGame, this), this.gameTime)
-    for(var i in this.players.hash) {
-      this.emitNewGame(this.players.hash[i])
-    }
+  get players () {
+    return players
   },
 
-  endGame: function() {
-    this.gameEnded = true
-    this.scores = {}
-    for(var i in this.players.hash) {
-      var player = this.players.hash[i]
-      this.scores[player.id] = player.scores()
-    }
-    this.nextGameAt = new Date().getTime() + this.nextGameIn
-    for(var i in this.players.hash) {
-      this.emitEndGame(this.players.hash[i])
-    }
-    this.map.remove()
-    this.newGameTimeout = setTimeout(u.proxy(this.initNewGame, this), this.nextGameIn)
+  get map () {
+    return map
   },
 
-  emitNewGame: function(player) {
-    var gameTime = this.startTime + this.gameTime - 2000 - new Date().getTime(),
-        spawnPoint = this.map.getSpawnPoint()
-    player.reset()
-    player.x = spawnPoint.x
-    player.y = spawnPoint.y
-    player.client.json.emit("newGame", {
-      gameTime: gameTime < 0 ? 0 : gameTime,
-      map: this.map.toJson(),
-      player: player.toJson()
-    })
-    player.client.json.broadcast.emit("enemyUpdate", player.toJson())
-  },
-
-  emitEndGame: function(player) {
-    var t = this.nextGameAt - new Date().getTime() - 2000
-    player.client.json.emit("endGame", {
-      scores: this.scores,
-      nextGameIn: t < 0 ? 0 : t
-    })
-  },
-  
   status: function() {
-    var players = []
-    for(var i=0; i<this.players.length; i++) {
-      players.push(this.players.arr[i].toJson())
+    let _players = []
+    for(let i=0; i<players.length; i++) {
+      _players.push(players.arr[i].toJson())
     }
     return {
-      players: players,
-      startTime: this.startTime
+      players: _players,
+      startTime: startTime
     }
   },
   
   connect: function(client) {
   
-    if(this.players.length == 0) {
-      this.initNewGame();
+    if(players.length == 0) {
+      initNewGame();
     }
   
-    var player = new Player(client)
+    let player = new Player(client)
     player.game = this
-    this.players.push(player);
+    players.push(player);
     client.on('joinRequest', u.proxy(this.onJoinRequest, this, player));
     client.on('update', u.proxy(player.update, player));
     client.on('wedgie', u.proxy(this.onWedgie, this, player));
@@ -103,15 +114,15 @@ exports.game = {
     
     player.client.json.emit('join', {
       player: player.toJson(),
-      enemies: this.players.allbut({
+      enemies: players.allbut({
         id: player.id
       }).toJson()
     });
     player.client.broadcast.json.emit("enemyJoin", player.toJson());
 
-    this.emitNewGame(player)
-    if(this.gameEnded) {
-      this.emitEndGame(player)
+    emitNewGame(player)
+    if(gameEnded) {
+      emitEndGame(player)
     }
 
   },
@@ -130,8 +141,8 @@ exports.game = {
   },
   
   onWedgie: function(victimId, player) {
-    if(this.gameEnded) return;
-    var victim = this.players.hash[victimId];
+    if(gameEnded) return;
+    var victim = players.hash[victimId];
     if(this.isWedgieable(victim, player)) {
       victim.wedgie(player);
       victim.deathCount++
@@ -143,8 +154,8 @@ exports.game = {
   },
 
   onBanzai: function(victimId, player) {
-    if(this.gameEnded) return;
-    var victim = this.players.hash[victimId];
+    if(gameEnded) return;
+    var victim = players.hash[victimId];
     if(this.isBanzaiable(victim, player)) {
       victim.banzai(player);
       if(!victim.wedgied) {
@@ -161,8 +172,8 @@ exports.game = {
   },
 
   onConsumePill: function(pillId, player) {
-    if(this.gameEnded) return;
-    this.map.consumePill(pillId, player)
+    if(gameEnded) return;
+    map.consumePill(pillId, player)
   },
   
   onDisconnect: function(something, player) {
@@ -170,14 +181,13 @@ exports.game = {
     player.client.broadcast.emit("enemyDisconnect", player.id);
     
     player.remove()
-    this.players.remove(player);
+    players.remove(player);
     
-    if(this.players.length == 0) {
-      this.map.remove()
-      delete this.map
-      this.map = null
-      clearTimeout(this.endGameTimeout)
-      clearTimeout(this.newGameTimeout)
+    if(players.length == 0) {
+      map.remove()
+      map = null
+      clearTimeout(endGameTimeout)
+      clearTimeout(newGameTimeout)
     }
   },
   

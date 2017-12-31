@@ -1,21 +1,21 @@
-var http = require('http'),
-    urlParser = require('url'),
-    headers = require('./server/headers.js').headers,
-    game = require('./server/game.js').game,
-    socketIO = require('socket.io'),
-    u = require('./server/utils.js'),
-    static = require('node-static'),
-    port = process.env.PORT || 1337;
+const http = require('http'),
+      urlParser = require('url'),
+      headers = require('./server/headers.js').headers,
+      game = require('./server/game.js').game,
+      socketIO = require('socket.io'),
+      u = require('./server/utils.js'),
+      static = require('node-static'),
+      port = process.env.PORT || 1337;
 
-var staticServer = new static.Server('./client/', {
+const staticServer = new static.Server('./client/', {
   cache: 'no-cache'
 });
-    
-var httpServer = http.createServer(function (req, res) {
 
-  var url = urlParser.parse(req.url),
-      parts = url.pathname.split("/"),
-      part = u.firstNot(parts, '') || 'index.html';
+const httpServer = http.createServer((req, res) => {
+
+  const url = urlParser.parse(req.url),
+        parts = url.pathname.split("/"),
+        part = u.firstNot(parts, '') || 'index.html';
 
   switch(part) {
   
@@ -49,7 +49,7 @@ var httpServer = http.createServer(function (req, res) {
 });
 httpServer.listen(port);
 
-var io = socketIO(httpServer)
+const io = socketIO(httpServer)
 io.sockets.on('connection', game.connect.bind(game));
 
 console.log('Server running at http://127.0.0.1:' + port + '/');
