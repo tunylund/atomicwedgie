@@ -33,25 +33,24 @@ class Map {
     this.map.height = Math.ceil(this.map.tiles.length * this.map.tileSize)
     this.map.width = Math.ceil(this.map.tiles[0].length * this.map.tileSize)
     this.maxPills = Math.ceil(this.map.tiles[0].length * this.map.tiles[0][0].length / (16), 3)
-    this.pills = new u.HashList()
+    this.pills = []
     this.pillInterval = setInterval(() => this.checkPills(), pillInterval)
   }
 
   remove () {
     clearInterval(this.pillInterval)
     while(this.pills.length > 0) {
-      const pill = this.pills.arr[0]
+      const pill = this.pills.pop()
       if(pill.timeout)
         clearTimeout(pill.timeout)
-      this.pills.remove(pill)
     }
-    this.pills = new u.HashList()
+    this.pills = []
   }
 
   toJson () {
     return {
       map: this.map,
-      pills: this.pills.arr
+      pills: this.pills
     }
   }
 
@@ -71,9 +70,10 @@ class Map {
   }
 
   consumePill (id, player) {
-    const pill = this.pills.hash[id]
+    const ix = this.pills.findIndex(p => p.id === id)
+    const pill = this.pills[ix]
     if (pill) {
-      this.pills.remove(pill)
+      this.pills.splice(ix, 1)
       player.consumePill(pill)
       this.sendDelPill(id)
     }
@@ -93,14 +93,14 @@ class Map {
   }
 
   sendNewPill (pill) {
-    for(let i=0; i<this.game.players.length; i++) {
-      this.game.players.arr[i].client.json.emit("newPill", pill);
+    for(let player of this.game.players) {
+      player.client.json.emit("newPill", pill);
     }
   }
 
   sendDelPill (pillId) {
-    for(let i=0; i<this.game.players.length; i++) {
-      this.game.players.arr[i].client.emit("delPill", pillId);
+    for(let player of this.game.players) {
+      player.client.emit("delPill", pillId);
     }
   }
   

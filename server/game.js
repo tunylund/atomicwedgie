@@ -3,7 +3,7 @@ const u = require('./utils.js'),
       maps = require('./maps.js'),
       texts = require('./texts.js')
 
-const players = new u.HashList()
+const players = []
 let startTime = null
 let map = null
 const gameTime = (2*60 + 30)*1000 // 3min
@@ -19,22 +19,17 @@ function initNewGame() {
   map = new maps.Map(u.randomFrom(maps.maps), exports.game);
   startTime = new Date().getTime()
   endGameTimeout = setTimeout(endGame, gameTime)
-  for(let i in players.hash) {
-    emitNewGame(players.hash[i])
-  }
+  players.map(emitNewGame)
 }
 
 function endGame() {
   gameEnded = true
   scores = {}
-  for(let i in players.hash) {
-    let player = players.hash[i]
+  for(let player of players) {
     scores[player.id] = player.scores()
   }
   nextGameAt = new Date().getTime() + nextGameIn
-  for(let i in players.hash) {
-    emitEndGame(players.hash[i])
-  }
+  players.map(emitEndGame)
   map.remove()
   newGameTimeout = setTimeout(initNewGame, nextGameIn)
 }
@@ -70,9 +65,9 @@ function handleJoinRequest(request, player) {
   
   player.client.json.emit('join', {
     player: player.toJson(),
-    enemies: players.allbut({
-      id: player.id
-    }).toJson()
+    enemies: players
+      .filter(p => p.id != player.id)
+      .map(p => p.toJson())
   });
   player.client.broadcast.json.emit("enemyJoin", player.toJson());
 
@@ -85,7 +80,7 @@ function handleJoinRequest(request, player) {
 
 function wedgie(victimId, player) {
   if(gameEnded) return;
-  const victim = players.hash[victimId];
+  const victim = players.find(p => p.id === victimId);
   if(isWedgieable(victim, player)) {
     victim.wedgie(player);
     victim.deathCount++
@@ -98,7 +93,7 @@ function wedgie(victimId, player) {
 
 function banzai(victimId, player) {
   if(gameEnded) return;
-  const victim = players.hash[victimId];
+  const victim = players.find(p => p.id === victimId);
   if(isBanzaiable(victim, player)) {
     victim.banzai(player);
     if(!victim.wedgied) {
@@ -137,7 +132,7 @@ function disconnect(player) {
   player.client.broadcast.emit("enemyDisconnect", player.id);
   
   player.remove()
-  players.remove(player);
+  players.splice(players.findIndex(p => p.id === player.id), 1)
   
   if(players.length == 0) {
     map.remove()
@@ -168,12 +163,8 @@ exports.game = {
   },
 
   status: function() {
-    let _players = []
-    for(let i=0; i<players.length; i++) {
-      _players.push(players.arr[i].toJson())
-    }
     return {
-      players: _players,
+      players: players.map(p => p.toJson()),
       startTime: startTime
     }
   },
