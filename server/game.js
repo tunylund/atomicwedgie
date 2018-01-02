@@ -1,5 +1,5 @@
 const u = require('./utils.js'),
-      Player = require('./player.js').Player,
+      Player = require('./player.js'),
       maps = require('./maps.js'),
       texts = require('./texts.js')
 
@@ -40,7 +40,7 @@ function endGame() {
 }
 
 function emitNewGame(player) {
-  var _gameTime = startTime + gameTime - 2000 - new Date().getTime(),
+  const _gameTime = startTime + gameTime - 2000 - new Date().getTime(),
       spawnPoint = map.getSpawnPoint()
   player.reset()
   player.x = spawnPoint.x
@@ -54,7 +54,7 @@ function emitNewGame(player) {
 }
 
 function emitEndGame(player) {
-  var t = nextGameAt - new Date().getTime() - 2000
+  const t = nextGameAt - new Date().getTime() - 2000
   player.client.json.emit("endGame", {
     scores: scores,
     nextGameIn: t < 0 ? 0 : t

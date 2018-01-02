@@ -1,55 +1,68 @@
-var u = require('./utils.js')
+const u = require('./utils.js')
 
-var Pill = {
-  duration: 15000,
-  applyEffect: function(player) {
-    for(var i in this.effect) {
+class Pill {
+
+  constructor (x, y, type) {
+    this.x = x
+    this.y = y
+    this.type = type
+    this.id = u.id('pill')
+  }
+
+  get duration () {
+    return 15000
+  }
+
+  applyEffect (player) {
+    for(let i in this.effect) {
       player[i] = this.effect[i]
     }
-  },
-  clearEffect: function(player) {
-    for(var i in this.clear) {
+  }
+
+  clearEffect (player) {
+    for(let i in this.clear) {
       player[i] = this.clear[i]
     }
   }
 }
 
-var pills = {
-
-  red: function() {
-    this.type = "red"
-  },
-
-  green: function() {
-    this.type = "green"
-    this.effect = {
-      speedMultiplier: 1.5
-    },
-    this.clear = {
-      speedMultiplier: 1
-    }
-  },
-
-  blue: function() {
-    this.type = "blue"
-  },
-
-  yellow: function() {
-    this.type = "yellow"
+class Red extends Pill {
+  constructor (x, y) {
+    super(x, y, 'red')
   }
 }
-var pillTypes = []
-for(var i in pills) {
-  pills[i].prototype = Pill
-  pillTypes.push(i)
+
+class Green extends Pill {
+  constructor (x, y) {
+    super(x, y, 'green')
+  }
+
+  get effect() {
+    return {
+      speedMultiplier: 1.5
+    }
+  }
+
+  get clear() {
+    return {
+      speedMultiplier: 1
+    }
+  }
 }
 
-
-exports.pill = function(type, position) {
-  var p = new pills[type]()
-  p.x = position.x
-  p.y = position.y
-  p.id = u.id("pill")
-  return p
+class Blue extends Pill {
+  constructor (x, y) {
+    super(x, y, 'blue')
+  }
 }
-exports.pillTypes = pillTypes
+
+class Yellow extends Pill {
+  constructor (x, y) {
+    super(x, y, 'yellow')
+  }
+}
+
+exports.getRandomPill = function(position) {
+  const Type = u.randomFrom([Red, Green, Blue, Yellow])
+  return new Type(position.x, position.y)
+}

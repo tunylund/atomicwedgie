@@ -1,29 +1,29 @@
-var u = require('./utils.js')
+const u = require('./utils.js')
 
-var turnSpeed = 10,
-    walkSpeed = 5,
-    banzaiWalkSpeed = 3,
-    wedgieDistance = 32,
-    banzaiDistance = 48,
-    banzaidDuration = 3500,
-    wedgiedDuration = 3500,
-    wedgieDirectionThreshold = 75 //255 max
+const turnSpeed = 10,
+      walkSpeed = 5,
+      banzaiWalkSpeed = 3,
+      wedgieDistance = 32,
+      banzaiDistance = 48,
+      banzaidDuration = 3500,
+      wedgiedDuration = 3500,
+      wedgieDirectionThreshold = 75 //255 max
 
-exports.Player = class Player {
+class Player {
 
   constructor (client, getSpawnPoint) {
     this.getSpawnPoint = getSpawnPoint
+    this.client = client
     this.id = "player_" + u.id()
     this.name = ""
-    this.client = client || {on: u.voidfn, emit: u.voidfn, send: u.voidfn}
-    this.color = "green"
+    this.color = ""
     this.reset()
     this.lagChecks = []
   }
 
   reset () {
     clearTimeout(this.clearDeathTimeout)
-    for(var type in this.pillEffects) {
+    for(let type in this.pillEffects) {
       clearTimeout(this.pillEffects[type].timeout)
     }
     this.walkSpeed = walkSpeed
@@ -76,11 +76,11 @@ exports.Player = class Player {
     if(this.isDead)
       return;
 
-    var status = msg;
+    let status = msg;
     
     if(status.time) {
-      var now = new Date();
-      var utcTime = now.getTime() + now.getTimezoneOffset()*60000;
+      const now = new Date();
+      const utcTime = now.getTime() + now.getTimezoneOffset()*60000;
       this.lagChecks.push(utcTime - status.time);
     }
     
@@ -89,7 +89,7 @@ exports.Player = class Player {
     status.performingWedgie = this.canPerformingWedgie() ? status.performingWedgie : false;
     status.v = u.limit(status.v, (status.banzaiMode ? banzaiWalkSpeed : walkSpeed)*this.speedMultiplier);
 
-    for(var i in status) {
+    for(let i in status) {
       this[i] = status[i]
     }
     
@@ -138,7 +138,7 @@ exports.Player = class Player {
 
   clearDeath () {
     if(this.banzaid) {
-      var spawnPoint = this.getSpawnPoint()
+      const spawnPoint = this.getSpawnPoint()
       this.x = spawnPoint.x
       this.y = spawnPoint.y
     }
@@ -187,9 +187,11 @@ exports.Player = class Player {
 
   remove () {
     clearTimeout(this.clearDeathTimeout)
-    for(var type in this.pillEffects) {
+    for(let type in this.pillEffects) {
       clearTimeout(this.pillEffects[type].timeout)
     }
   }
   
 }
+
+module.exports = Player

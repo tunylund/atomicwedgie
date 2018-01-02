@@ -1,6 +1,7 @@
-var u = require('./utils.js')
+const u = require('./utils.js')
+
 exports.wedgie = function(victim, player) {
-  var words = [
+  const words = [
         'his boxers pulled',
         'squeezed up',
         'served',
@@ -11,11 +12,11 @@ exports.wedgie = function(victim, player) {
         "nutsacksquished"
       ], 
       r = u.randomBetween(0, words.length-1)
-  return victim.name + " got " + words[r] + " by " + player.name
+  return `${victim.name} got ${words[r]} by ${player.name}`
 }
 
 exports.banzai = function(victim, player) {
-  var words = [
+  const words = [
         'beat into bloody pulp',
         'mutilated',
         'smashed',
@@ -26,7 +27,7 @@ exports.banzai = function(victim, player) {
         "smashed",
         "liquified",
         "banzaid"
-      ], 
+      ],
       r = u.randomBetween(0, words.length-1)
-  return victim.name + " got " + words[r] + " by " + player.name
+  return `${victim.name} got ${words[r]} by ${player.name}`
 }

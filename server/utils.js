@@ -7,7 +7,7 @@ exports.firstNot = function(arr, value) {
 
 exports.voidfn = function(){};
 
-var id = 0;
+let id = 0;
 exports.id = function(prefix) {
   return (prefix || "") + (id++);
 };
@@ -108,14 +108,14 @@ exports.randomFrom = function(arr) {
 
 exports.integerMapToAciiMap = function(src) {
 
-  var res = [];
-  var characterMap = [
+  let res = [];
+  const characterMap = [
     ' ',
     '%','-','/','\\','+',
     '#','G','[',']','*'
   ];
   
-  for(var i=0, row = ""; i<src.length; i++) {
+  for(let i=0, row = ""; i<src.length; i++) {
     row = row+characterMap[src[i]];
     if(row.length == 40) {
       res.push(row);
@@ -126,7 +126,7 @@ exports.integerMapToAciiMap = function(src) {
 
 }
 
-var integerMap = [
+const integerMap = [
     3,5,2,2,2,5,2,2,2,5,2,2,2,5,0,0,0,0,0,0,0,0,0,0,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,4,
     8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,
     8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,

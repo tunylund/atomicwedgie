@@ -1,180 +1,163 @@
-var u = require('./utils.js'),
-    res = require('./../client/js/resources').resources,
-    pills = require('./pills.js')
+const u = require('./utils.js'),
+      res = require('./../client/js/resources').resources,
+      pills = require('./pills.js')
 
+function sliceString(str, length) {
+  let result = []
+  for (let cursor = 0; cursor < str.length; cursor += length) {
+      result.push(str.substr(cursor, length))
+  }
+  return result
+}
 /**
  * Takes an ascii-art-style array of characters and converts it to an Akihabara-compatible map format.
- * @param {Array} map An array of characters representing a map.
- * @param {Array} tra A translation array. This is an array of arrays, formatted like [ [null, char1], [0, char2], [1, char3] ]. There must at least be a null entry, followed by one numerical entry for each tile type you want to render, corresponding to the unique characters in the map array. The null entry maps a character to empty space.
+ * @param {Array} asciiMap An array of characters representing a map.
+ * @param {Array} translationMap A translation array. This is an array of arrays, formatted like [ [null, char1], [0, char2], [1, char3] ]. There must at least be a null entry, followed by one numerical entry for each tile type you want to render, corresponding to the unique characters in the map array. The null entry maps a character to empty space.
  * @returns A map array formatted such that it can be attached to a map object.
  */
-function asciiArtToMap(map,tra) {
-  var sz=tra[0][1].length;
-  var ret=[];
-  var xpos;
-  var pie;
-  for (var y=0;y<map.length;y++) {
-    var row=[];
-    xpos=0;
-    while (xpos<map[y].length) {
-      pie=map[y].substr(xpos,sz);
-      for (var t=0;t<tra.length;t++)
-        if (pie==tra[t][1]) {
-          //if (t==0) row.push(null); else 
-          row.push(tra[t][0]);
-          break;
-        }
-      xpos+=sz;
-    }
-    ret.push(row);
-  }
-  return ret;
+function asciiArtToMap(asciiMap, translationMap) {
+  const characterLength = Object.keys(translationMap)[0].length;
+  return asciiMap
+    .map(asciiRow => sliceString(asciiRow, characterLength)
+      .map(slice => translationMap[slice]))
 }
 
-var pillInterval = 1000
+const pillInterval = 1000
 
-exports.Map = function(map, game) {
-  this.game = game
-  this.map = map;
-  this.init();
-};
-exports.Map.prototype = {
+class Map {
 
-  init: function() {
+  constructor(map, game) {
+    this.game = game
+    this.map = map
     this.map.tileData = asciiArtToMap(this.map.tiles, this.map.characterMap)
     this.map.height = Math.ceil(this.map.tiles.length * this.map.tileSize)
     this.map.width = Math.ceil(this.map.tiles[0].length * this.map.tileSize)
-    this.maxPills = Math.ceil(this.map.tiles[0].length * this.map.tiles[0][0].length / (16))
-    this.maxPills = this.maxPills < 3 ? 3 : this.maxPills
+    this.maxPills = Math.ceil(this.map.tiles[0].length * this.map.tiles[0][0].length / (16), 3)
     this.pills = new u.HashList()
     this.pillInterval = setInterval(() => this.checkPills(), pillInterval)
-  },
+  }
 
-  remove: function() {
+  remove () {
     clearInterval(this.pillInterval)
     while(this.pills.length > 0) {
-      var pill = this.pills.arr[0]
+      const pill = this.pills.arr[0]
       if(pill.timeout)
-        clearTimeout(this.pillEffects[pill.type].timeout)
+        clearTimeout(pill.timeout)
       this.pills.remove(pill)
     }
     this.pills = new u.HashList()
-  },
-  
-  toJson: function() {
+  }
+
+  toJson () {
     return {
       map: this.map,
       pills: this.pills.arr
     }
-  },
+  }
 
-  getSpawnPoint: function() {
+  getSpawnPoint () {
     while(true) {
-      var rx = u.randomBetween(2, this.map.tileData[0].length-2),
-          ry = u.randomBetween(2, this.map.tileData.length-2)
-      if(this.map.tiles[ry-1][rx-1]   == ' '
-        && this.map.tiles[ry-1][rx]   == ' '
-        && this.map.tiles[ry-1][rx+1] == ' '
-        && this.map.tiles[ry][rx-1]   == ' '
-        && this.map.tiles[ry][rx]     == ' '
-        && this.map.tiles[ry][rx+1]   == ' '
-        && this.map.tiles[ry+1][rx-1] == ' '
-        && this.map.tiles[ry+1][rx]   == ' '
-        && this.map.tiles[ry+1][rx+1] == ' ') {
-        return {
-          x: rx * this.map.tileSize,
-          y: ry * this.map.tileSize
-        }
+      const rx = u.randomBetween(2, this.map.tileData[0].length-2),
+            ry = u.randomBetween(2, this.map.tileData.length-2)
+      let isok = true
+      for (let x of [-1, 0, 1]) for (let y of [-1, 0, 1]) {
+        isok = isok && this.map.tiles[ry+y][rx+x] === ' '
+      }
+      if (isok) return {
+        x: rx * this.map.tileSize,
+        y: ry * this.map.tileSize
       }
     }
-  },
+  }
 
-  consumePill: function(id, player) {
-    var pill = this.pills.hash[id]
-    if(pill) {
+  consumePill (id, player) {
+    const pill = this.pills.hash[id]
+    if (pill) {
       this.pills.remove(pill)
       player.consumePill(pill)
       this.sendDelPill(id)
     }
-  },
+  }
 
-  checkPills: function() {
+  checkPills () {
     if(this.pills.length < this.maxPills && Math.random() < 0.25) {
       this.createPill()
     }
-  },
+  }
 
-  createPill: function() {
-    var point = this.getSpawnPoint(),
-        pill = pills.pill(u.randomFrom(pills.pillTypes), point)
+  createPill () {
+    const point = this.getSpawnPoint(),
+          pill = pills.getRandomPill(point)
     this.pills.push(pill)
     this.sendNewPill(pill)
-  },
+  }
 
-  sendNewPill: function(pill) {
-    for(var i=0; i<this.game.players.length; i++) {
+  sendNewPill (pill) {
+    for(let i=0; i<this.game.players.length; i++) {
       this.game.players.arr[i].client.json.emit("newPill", pill);
     }
-  },
+  }
 
-  sendDelPill: function(pillId) {
-    for(var i=0; i<this.game.players.length; i++) {
+  sendDelPill (pillId) {
+    for(let i=0; i<this.game.players.length; i++) {
       this.game.players.arr[i].client.emit("delPill", pillId);
     }
   }
   
 }
 
-var blueWalls = [[14, ' '], 
-                [0, ','], 
-                [1, '.'], 
-                [2, '-'], 
-                [3, '|'], 
-                [5, ';'],
-                [6, ':'],
-                [14, 'o']]
+exports.Map = Map
 
-    redWalls = [[14, ' '], 
-                [8, ','], 
-                [9, '.'], 
-                [13, '-'], 
-                [10, '|'], 
-                [11, ';'],
-                [12, ':'],
-                [14, 'o']]
+const blueWalls = { ' ': 14,
+                    ',': 0,
+                    '.': 1,
+                    '-': 2,
+                    '|': 3,
+                    ';': 5,
+                    ':': 6,
+                    'o': 14 }
 
-    decorations = [[14, 'b'],
-                  [14, 'B'],
-                  [14, 'c'],
-                  [14, 'C'],
-                  [14, 'K'],
-                  [14, 'k'],
-                  [14, 'Q'],
-                  [14, 'q'],
-                  [14, 'T'],
-                  [14, 't'],
-                  [14, 'P'],
-                  [14, 'p'],
-                  [14, 'L'],
-                  [14, 'l'],
-                  [14, 'W'],
-                  [14, 'w'],
-                  [14, 'S'],
-                  [14, 's'],
-                  [14, 'H'],
-                  [14, 'h'],
-                  [14, 'Z'],
-                  [14, 'z'],
-                  [14, 'X'],
-                  [14, 'x'],
-                  [14, 'O'],
-                  [14, 'o']]
+      redWalls = { ' ': 14,
+                   ',': 8,
+                   '.': 9,
+                   '-': 13,
+                   '|': 10,
+                   ';': 11,
+                   ':': 12,
+                   'o': 14 }
+
+      decorations = { 'b': 14,
+                      'B': 14,
+                      'c': 14,
+                      'C': 14,
+                      'K': 14,
+                      'k': 14,
+                      'Q': 14,
+                      'q': 14,
+                      'T': 14,
+                      't': 14,
+                      'P': 14,
+                      'p': 14,
+                      'L': 14,
+                      'l': 14,
+                      'W': 14,
+                      'w': 14,
+                      'S': 14,
+                      's': 14,
+                      'H': 14,
+                      'h': 14,
+                      'Z': 14,
+                      'z': 14,
+                      'X': 14,
+                      'x': 14,
+                      'O': 14,
+                      'o': 14 }
 
 exports.maps = [
   {
     id: "map_1",
     name: "The Arena (2-4 players)",
-    floorImage: res.largeMarble,//"img/floors/largemarble-huge.png",
+    floorImage: res.largeMarble, //"img/floors/largemarble-huge.png",
     tileImage: res.walls,
     tileSize: 16,
     emptyTile: 14,
@@ -220,7 +203,7 @@ exports.maps = [
     tileImage: res.walls,
     tileSize: 16,
     emptyTile: 14,
-    characterMap: redWalls.concat(decorations),
+    characterMap: Object.assign({}, redWalls, decorations),
     tiles: [
       ",--------------------------------------.",
       "|                                      |",
@@ -262,7 +245,7 @@ exports.maps = [
     tileImage: res.walls,
     tileSize: 16,
     emptyTile: 14,
-    characterMap: blueWalls.concat(decorations),
+    characterMap: Object.assign({}, blueWalls, decorations),
     tiles: [
       ",---------------------------------------------------.",
       "|              |              |      |            Kk|",
@@ -345,7 +328,7 @@ exports.maps = [
     tileImage: res.walls,
     tileSize: 16,
     emptyTile: 14,
-    characterMap: redWalls.concat(decorations),
+    characterMap: Object.assign({}, redWalls, decorations),
     tiles: [
       ",--------------------------------------------------------------.",
       "|     |     |               |     |                            |",
@@ -404,7 +387,7 @@ exports.maps = [
     tileImage: res.walls,
     tileSize: 16,
     emptyTile: 14,
-    characterMap: blueWalls.concat(decorations),
+    characterMap: Object.assign({}, blueWalls, decorations),
     tiles: [
       ",--------------------------------------------------------------.",
       "|                                                              |",
@@ -463,7 +446,7 @@ exports.maps = [
     tileImage: res.walls,
     tileSize: 16,
     emptyTile: 14,
-    characterMap: redWalls.concat(decorations),
+    characterMap: Object.assign({}, redWalls, decorations),
     tiles: [
       ",--------------------------------------.",
       "|                                      |",

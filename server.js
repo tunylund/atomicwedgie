@@ -1,6 +1,5 @@
 const http = require('http'),
       urlParser = require('url'),
-      headers = require('./server/headers.js').headers,
       game = require('./server/game.js').game,
       socketIO = require('socket.io'),
       u = require('./server/utils.js'),
@@ -21,7 +20,9 @@ const httpServer = http.createServer((req, res) => {
   
     case "status":
       res.setHeader('Cache-Control', 'no-cache');
-      res.writeHead(headers.success, headers.json);
+      res.writeHead(200, {
+        'Content-type': 'application/json'
+      });
       res.end(JSON.stringify(game.status()));
       break;
 
