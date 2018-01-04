@@ -2,7 +2,6 @@ const http = require('http'),
       urlParser = require('url'),
       game = require('./server/game.js').game,
       socketIO = require('socket.io'),
-      u = require('./server/utils.js'),
       static = require('node-static'),
       port = process.env.PORT || 1337;
 
@@ -14,7 +13,7 @@ const httpServer = http.createServer((req, res) => {
 
   const url = urlParser.parse(req.url),
         parts = url.pathname.split("/"),
-        part = u.firstNot(parts, '') || 'index.html';
+        part = parts.find(x => x !== '') || 'index.html';
 
   switch(part) {
   

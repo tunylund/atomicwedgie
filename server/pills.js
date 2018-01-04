@@ -6,7 +6,7 @@ class Pill {
     this.x = x
     this.y = y
     this.type = type
-    this.id = u.id('pill')
+    this.id = u.id('pill-')
   }
 
   get duration () {
@@ -14,14 +14,21 @@ class Pill {
   }
 
   applyEffect (player) {
+    this.consumer = player
     for(let i in this.effect) {
       player[i] = this.effect[i]
     }
+    player.consumePill(this)
+    this.timeout = setTimeout(() => this.clearEffect(), this.duration)
   }
 
-  clearEffect (player) {
-    for(let i in this.clear) {
-      player[i] = this.clear[i]
+  clearEffect () {
+    clearTimeout(this.timeout)
+    if (this.consumer) {
+      for(let i in this.clear) {
+        this.consumer[i] = this.clear[i]
+      }
+      this.consumer.clearPill(this.type)
     }
   }
 }
@@ -29,6 +36,18 @@ class Pill {
 class Red extends Pill {
   constructor (x, y) {
     super(x, y, 'red')
+  }
+
+  get effect() {
+    return {
+      invincibleAgainstBanzai: true
+    }
+  }
+
+  get clear() {
+    return {
+      invincibleAgainstBanzai: false
+    }
   }
 }
 

@@ -1,4 +1,6 @@
-const u = require('./utils.js')
+const u = require('./utils'),
+      texts = require('./texts'),
+      Timer = u.Timer
 
 const turnSpeed = 10,
       walkSpeed = 5,
@@ -12,9 +14,10 @@ const turnSpeed = 10,
 class Player {
 
   constructor (client, getSpawnPoint) {
+    this.clearDeathTimeout = new Timer(() => this.clearDeath(), wedgiedDuration)
     this.getSpawnPoint = getSpawnPoint
     this.client = client
-    this.id = "player_" + u.id()
+    this.id = "player-" + u.id()
     this.name = ""
     this.color = ""
     this.reset()
@@ -22,18 +25,13 @@ class Player {
   }
 
   reset () {
-    clearTimeout(this.clearDeathTimeout)
-    for(let type in this.pillEffects) {
-      clearTimeout(this.pillEffects[type].timeout)
-    }
+    this.clearDeathTimeout.stop()
     this.walkSpeed = walkSpeed
     this.turnSpeed = turnSpeed
     this.wedgied = this.banzaid = this.banzaiMode = false;
     this.pillEffects = {}
     this.speedMultiplier = 1
-    this.x = 
-      this.y = 
-      this.v = 
+    this.v = 
       this.rotV = 
       this.rotation = 
       this.wedgieCount = 
@@ -42,6 +40,9 @@ class Player {
       this.score =
       this.performingWedgie = 
       this.performingBanzai = 0
+    const spawnPoint = this.getSpawnPoint()
+    this.x = spawnPoint.x
+    this.y = spawnPoint.y
   }
 
   toJson () {
@@ -84,10 +85,10 @@ class Player {
       this.lagChecks.push(utcTime - status.time);
     }
     
-    status.id = this.id;
-    status.performingBanzai = this.canPerformingBanzai() ? status.performingBanzai : false;
-    status.performingWedgie = this.canPerformingWedgie() ? status.performingWedgie : false;
-    status.v = u.limit(status.v, (status.banzaiMode ? banzaiWalkSpeed : walkSpeed)*this.speedMultiplier);
+    status.id = this.id
+    status.performingBanzai = this.canPerformingBanzai() ? status.performingBanzai : false
+    status.performingWedgie = this.canPerformingWedgie() ? status.performingWedgie : false
+    status.v = Math.min(status.v, (status.banzaiMode ? banzaiWalkSpeed : walkSpeed)*this.speedMultiplier)
 
     for(let i in status) {
       this[i] = status[i]
@@ -107,33 +108,50 @@ class Player {
   }
     
   canPerformingWedgie () {
-    return !this.banzaiMode && !this.performingWedgie && !this.wedgied && !this.banzaid;
+    return !this.banzaiMode && !this.performingWedgie && !this.wedgied && !this.banzaid
   }
   
   canPerformingBanzai () {
-    return this.banzaiMode && !this.performingBanzai && !this.wedgied && !this.banzaid;
+    return this.banzaiMode && !this.performingBanzai && !this.wedgied && !this.banzaid
+  }
+
+  claimWedgie () {
+    this.wedgieCount++
+    this.score += 5
+    this.client.json.emit("score", this.scores())
+  }
+
+  claimBanzai () {
+    this.banzaiCount++
+    this.score += 2
+    this.client.json.emit("score", {
+      wedgieCount: this.wedgieCount,
+      banzaiCount: this.banzaiCount
+    })
   }
 
   wedgie (enemy) {
     this.wedgied = true
     this.banzaiMode = false
+    this.deathCount++
     this.performingBanzai = false
     this.performingWedgie = false
     this.client.emit("wedgie", enemy.id);
     this.client.broadcast.emit("enemyWedgie", this.id);
-    clearTimeout(this.clearDeathTimeout)
-    this.clearDeathTimeout = setTimeout(() => this.clearDeath(), wedgiedDuration)
+    this.clearDeathTimeout.start(wedgiedDuration)
+    this.client.broadcast.emit("text", texts.wedgie(this, enemy));
   }
 
   banzai (enemy) {
     this.banzaid = true
+    if (!this.wedgied) this.deathCount++
     this.banzaiMode = false
     this.performingBanzai = false
     this.performingWedgie = false
     this.client.emit("banzai", enemy.id);
     this.client.broadcast.emit("enemyBanzai", this.id);
-    clearTimeout(this.clearDeathTimeout)
-    this.clearDeathTimeout = setTimeout(() => this.clearDeath(), banzaidDuration)
+    this.clearDeathTimeout.start(banzaidDuration)
+    this.client.broadcast.emit("text", texts.banzai(this, enemy));
   }
 
   clearDeath () {
@@ -144,51 +162,31 @@ class Player {
     }
     this.wedgied = false
     this.banzaid = false
-    this.client.json.emit("clearDeath", {
-      id: this.id,
-      x: this.x,
-      y: this.y
-    });
-    this.client.broadcast.emit("clearDeath", {
-      id: this.id,
-      x: this.x,
-      y: this.y
-    });
+    const msg = { id: this.id, x: this.x, y: this.y }
+    this.client.json.emit("clearDeath", msg);
+    this.client.broadcast.emit("clearDeath", msg);
   }
 
   consumePill (pill) {
-    pill.applyEffect(this)
-    if(!this.pillEffects[pill.type])
-      this.pillEffects[pill.type] = pill
-    clearTimeout(this.pillEffects[pill.type].timeout)
-    this.pillEffects[pill.type].timeout = setTimeout(() => this.clearPillEffect(pill.type), pill.duration)
-    this.client.emit("consumePill", {
-      playerId: this.id,
-      pillId: pill.id
-    })
-    this.client.broadcast.json.emit("consumePill", {
-      playerId: this.id,
-      pillId: pill.id
-    })
+    if (this.pillEffects[pill.type]) {
+      clearTimeout(this.pillEffects[pill.type].timeout)
+    }
+    this.pillEffects[pill.type] = pill
+    const msg = { playerId: this.id, pillId: pill.id }
+    this.client.emit("consumePill", msg)
+    this.client.broadcast.json.emit("consumePill", msg)
   }
 
-  clearPillEffect (type) {
-    this.pillEffects[type].clearEffect(this)
-    this.client.emit("clearPillEffect", {
-      playerId: this.id,
-      type: type
-    })
-    this.client.broadcast.json.emit("clearPillEffect", {
-      playerId: this.id,
-      type: type
-    })
-    delete this.pillEffects[type]
+  clearPill (type) {
+    const msg = { playerId: this.id, type }
+    this.client.emit("clearPillEffect", msg)
+    this.client.broadcast.json.emit("clearPillEffect", msg)
   }
 
   remove () {
-    clearTimeout(this.clearDeathTimeout)
+    this.clearDeathTimeout.stop()
     for(let type in this.pillEffects) {
-      clearTimeout(this.pillEffects[type].timeout)
+      this.pillEffects[type].clearEffect()
     }
   }
   

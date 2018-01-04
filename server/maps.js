@@ -26,8 +26,8 @@ const pillInterval = 1000
 
 class Map {
 
-  constructor(map, game) {
-    this.game = game
+  constructor(map, players) {
+    this.players = players
     this.map = map
     this.map.tileData = asciiArtToMap(this.map.tiles, this.map.characterMap)
     this.map.height = Math.ceil(this.map.tiles.length * this.map.tileSize)
@@ -41,8 +41,7 @@ class Map {
     clearInterval(this.pillInterval)
     while(this.pills.length > 0) {
       const pill = this.pills.pop()
-      if(pill.timeout)
-        clearTimeout(pill.timeout)
+      pill.clearEffect()
     }
     this.pills = []
   }
@@ -69,14 +68,9 @@ class Map {
     }
   }
 
-  consumePill (id, player) {
+  popPill (id) {
     const ix = this.pills.findIndex(p => p.id === id)
-    const pill = this.pills[ix]
-    if (pill) {
-      this.pills.splice(ix, 1)
-      player.consumePill(pill)
-      this.sendDelPill(id)
-    }
+    return this.pills.splice(ix, 1)[0]
   }
 
   checkPills () {
@@ -93,20 +87,16 @@ class Map {
   }
 
   sendNewPill (pill) {
-    for(let player of this.game.players) {
+    for(let player of this.players) {
       player.client.json.emit("newPill", pill);
     }
   }
 
-  sendDelPill (pillId) {
-    for(let player of this.game.players) {
-      player.client.emit("delPill", pillId);
-    }
-  }
-  
 }
 
-exports.Map = Map
+exports.random = function (players) {
+  return new Map(u.randomFrom(maps), players)
+}
 
 const blueWalls = { ' ': 14,
                     ',': 0,
@@ -153,7 +143,7 @@ const blueWalls = { ' ': 14,
                       'O': 14,
                       'o': 14 }
 
-exports.maps = [
+const maps = [
   {
     id: "map_1",
     name: "The Arena (2-4 players)",

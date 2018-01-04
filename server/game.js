@@ -1,47 +1,30 @@
 const u = require('./utils.js'),
       Player = require('./player.js'),
       maps = require('./maps.js'),
-      texts = require('./texts.js')
+      texts = require('./texts.js'),
+      Timer = u.Timer
 
 const players = []
-let startTime = null
 let map = null
-const gameTime = (2*60 + 30)*1000 // 3min
-const nextGameIn = 15000
-let nextGameAt = new Date().getTime()
-let gameEnded = false
-let endGameTimeout = null
-let newGameTimeout = null
-let scores = {}
+let endGameTimeout = new Timer(endGame, (2 * 60 + 30) * 1000) // 2:30mins
+let newGameTimeout = new Timer(initNewGame, 15000)
 
 function initNewGame() {
-  //map = new maps.Map(maps.maps[5], this);
-  map = new maps.Map(u.randomFrom(maps.maps), exports.game);
-  startTime = new Date().getTime()
-  endGameTimeout = setTimeout(endGame, gameTime)
+  map = maps.random(players)
+  endGameTimeout.start()
   players.map(emitNewGame)
 }
 
 function endGame() {
-  gameEnded = true
-  scores = {}
-  for(let player of players) {
-    scores[player.id] = player.scores()
-  }
-  nextGameAt = new Date().getTime() + nextGameIn
   players.map(emitEndGame)
   map.remove()
-  newGameTimeout = setTimeout(initNewGame, nextGameIn)
+  newGameTimeout.start()
 }
 
 function emitNewGame(player) {
-  const _gameTime = startTime + gameTime - 2000 - new Date().getTime(),
-      spawnPoint = map.getSpawnPoint()
   player.reset()
-  player.x = spawnPoint.x
-  player.y = spawnPoint.y
   player.client.json.emit("newGame", {
-    gameTime: _gameTime < 0 ? 0 : _gameTime,
+    gameTime: endGameTimeout.timeLeft,
     map: map.toJson(),
     player: player.toJson()
   })
@@ -49,10 +32,12 @@ function emitNewGame(player) {
 }
 
 function emitEndGame(player) {
-  const t = nextGameAt - new Date().getTime() - 2000
+  const scores = players
+    .map(player => ({ [player.id] : player.scores()}))
+    .reduce(Object.assign, {})
   player.client.json.emit("endGame", {
-    scores: scores,
-    nextGameIn: t < 0 ? 0 : t
+    scores,
+    nextGameIn: newGameTimeout.timeLeft
   })
 }
 
@@ -72,56 +57,50 @@ function handleJoinRequest(request, player) {
   player.client.broadcast.json.emit("enemyJoin", player.toJson());
 
   emitNewGame(player)
-  if(gameEnded) {
+  if(newGameTimeout.isTicking) {
     emitEndGame(player)
   }
-
 }
 
 function wedgie(victimId, player) {
-  if(gameEnded) return;
+  if(newGameTimeout.isTicking) return;
   const victim = players.find(p => p.id === victimId);
-  if(isWedgieable(victim, player)) {
+  const isWedgieable = !victim.wedgied && !victim.banzaid && victim.id != player.id
+  if(isWedgieable) {
     victim.wedgie(player);
-    victim.deathCount++
-    player.wedgieCount++
-    player.score += 5
-    player.client.json.emit("score", player.scores());
-    victim.client.broadcast.emit("text", texts.wedgie(victim, player));
+    player.claimWedgie()
   }
 }
 
 function banzai(victimId, player) {
-  if(gameEnded) return;
+  if(newGameTimeout.isTicking) return;
   const victim = players.find(p => p.id === victimId);
-  if(isBanzaiable(victim, player)) {
+  const isBanzaiable = !victim.banzaid && !victim.invincibleAgainstBanzai && victim.id != player.id
+  if(isBanzaiable) {
     victim.banzai(player);
     if(!victim.wedgied) {
-      victim.deathCount++
-      player.banzaiCount++
-      player.score += 2
-      player.client.json.emit("score", {
-        wedgieCount: player.wedgieCount,
-        banzaiCount: player.banzaiCount
-      });
+      player.claimBanzai()
     }
-    victim.client.broadcast.emit("text", texts.banzai(victim, player));
   }
 }
 
 function consumePill(pillId, player) {
-  if(gameEnded) return;
-  map.consumePill(pillId, player)
+  if(newGameTimeout.isTicking) return;
+  const pill = map.popPill(pillId)
+  if (pill) {
+    pill.applyEffect(player)
+    for(let player of players) {
+      player.client.emit("delPill", pillId);
+    }
+  }
 }
 
 function handleMessage(message, player) {
   switch(message) {
     case "getLag":
-      let now = new Date(),
-          lag = now.getTime() + now.getTimezoneOffset()*60000,
-          updateLag = 0;
+      const now = new Date()
       player.client.json.emit("lagCheck", {
-        lag: lag
+        lag: now.getTime() + now.getTimezoneOffset()*60000
       });
       break;
   }
@@ -137,35 +116,17 @@ function disconnect(player) {
   if(players.length == 0) {
     map.remove()
     map = null
-    clearTimeout(endGameTimeout)
-    clearTimeout(newGameTimeout)
+    endGameTimeout.stop()
+    newGameTimeout.stop()
   }
-}
-
-function isWedgieable(victim, player) {
-  return !victim.wedgied && !victim.banzaid && victim.id != player.id
-}
-
-function isBanzaiable(victim, player) {
-  return !victim.banzaid 
-      && !victim.pillEffects["red"]
-      && victim.id != player.id
 }
 
 exports.game = {
 
-  get players () {
-    return players
-  },
-
-  get map () {
-    return map
-  },
-
   status: function() {
     return {
       players: players.map(p => p.toJson()),
-      startTime: startTime
+      startTime: endGameTimeout.startTime
     }
   },
   

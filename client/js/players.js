@@ -418,8 +418,10 @@ define([
     },
 
     clearPillEffect: function(type) {
-      this.pillEffects[type].clearEffect(this)
-      delete this.pillEffects[type]
+      if(this.pillEffects[pill.type]) {
+        this.pillEffects[type].clearEffect(this)
+        delete this.pillEffects[type]
+      }
     },
 
     clearDeath: function(position) {
