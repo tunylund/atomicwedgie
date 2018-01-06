@@ -1,6 +1,6 @@
 if(typeof define !== 'function') {
   define = function (){
-    exports.resources = arguments[arguments.length-1]();
+    module.exports.resources = arguments[arguments.length-1]();
   }
 }
 define([], function() {

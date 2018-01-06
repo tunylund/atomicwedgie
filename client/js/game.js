@@ -86,8 +86,8 @@ define(["resources",
       if(game.player && game.map.width > game.width && !scoreTable) {
         var x = Math.floor(Math.min((game.width  - 16) / 2 - game.player.x, 0));
         var y = Math.floor(Math.min((game.height - 16) / 2 - game.player.y, 0));
-        x = Math.max(game.width,  x + map.width)  - map.width;
-        y = Math.max(game.height, y + map.height) - map.height;
+        x = Math.max(game.width,  x + game.map.width)  - game.map.width;
+        y = Math.max(game.height, y + game.map.height) - game.map.height;
         if(mapStage.x != x || mapStage.y != y) {
           mapStage.x = playerStage.x = shadows.x = x;
           mapStage.y = playerStage.y = shadows.y = y;
@@ -104,13 +104,20 @@ define(["resources",
       }
     });
 
-    game.onNewGame = function() {
+    game.newGame = function(map, gameTime, player) {
+      game.reset()
+      game.setMap(map)
+      game.hud.time.time = gameTime / 1000
+      game.hud.wedgieScoreLabel.score = 0
+      game.hud.banzaiScoreLabel.score = 0
+      game.addPlayer(player)
       enableShadows()
       if(scoreTable) {
         scoreTable.remove()
         scoreTable = null
       }
     }
+
     game.players = {}
     game.addPlayer = function(player) {
       if(!game.player) {

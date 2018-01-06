@@ -1,16 +1,15 @@
 define(["resources", "decorations"], function(res, decorations) {
 
   function buildCollisionData(map, emptyTile) {
-    var colData = [],
+    const colData = [],
         w = map.width,
         h = map.height,
         tw = map.tileWidth,
         th = map.tileHeight
-    for(var y=0; y<h; y=y+th) {
-      var row = []
-      for(var x=0; x<w; x=x+tw) {
-        var tile = map.checkTile(x, y)
-        row.push(tile == emptyTile ? 0 : 1)
+    for(let y=0; y<h; y=y+th) {
+      const row = []
+      for(let x=0; x<w; x=x+tw) {
+        row.push(map.checkTile(x, y) == emptyTile ? 0 : 1)
       }
       colData.push(row)
     }
@@ -18,27 +17,18 @@ define(["resources", "decorations"], function(res, decorations) {
   }
 
   function buildFloorData(floorMap, mapData) {
-    var floorData = [],
-        w = mapData.width,
-        h = mapData.height,
-        tw = floorMap.tileWidth,
-        th = floorMap.tileHeight,
-        cx = Math.ceil(w / tw),
-        cy = Math.ceil(h / th)
-    for(var y=0; y<cy; y++) {
-      var row = []
-      for(var x=0; x<cx; x++) {
-        row.push(0)
-      }
-      floorData.push(row)
-    }
-    return floorData 
+    const w = mapData.width,
+          h = mapData.height,
+          tw = floorMap.tileWidth,
+          th = floorMap.tileHeight,
+          cx = Math.ceil(w / tw),
+          cy = Math.ceil(h / th)
+    return new Array(cy).fill(0).map(x => new Array(cx).fill(0))
   }
 
-  var FloorMap = enchant.Class.create({
-
-    initialize: function(mapData, width, height) {
-      var game = enchant.Game.instance
+  class FloorMap {
+    constructor(mapData, width, height) {
+      const game = enchant.Game.instance
       this.div = document.createElement("div")
       this.div.className = "floorMap"
       this.div.style.backgroundImage = "url(" + mapData.floorImage + ")"
@@ -48,46 +38,45 @@ define(["resources", "decorations"], function(res, decorations) {
       this.div.style.height = (game.height > height ? height : game.height) + "px"
 
       game._element.insertBefore(this.div, game._element.childNodes[0])
-    },
+    }
 
-    draw: function() {
+    draw() {
       if(this.x || this.y) {
         this.div.style.backgroundPosition = this.x + "px " + this.y + "px"
       }
-    },
+    }
 
-    remove: function() {
+    remove() {
       this.div.parentNode.removeChild(this.div)
       this.div = null
     }
+  }
 
-  })
+  class FloorMapNode extends enchant.Node {
 
-  var FloorMapNode = enchant.Class.create(enchant.Node, {
-
-    initialize: function(mapData, width, height) {
-      enchant.Node.call(this)
-      var game = enchant.Game.instance,
+    constructor (mapData, width, height) {
+      super()
+      const game = enchant.Game.instance,
           img = game.assets[mapData.floorImage]
       this._image = new enchant.Surface(width, height)
-      for(var y=0; y<height; y=y+img.height) {
-        for(var x = 0; x<width; x=x+img.width) {
+      for(let y=0; y<height; y=y+img.height) {
+        for(let x = 0; x<width; x=x+img.width) {
           this._image.context.drawImage(img._element, x, y)
         }
       }
-    },
+    }
 
     /*cvsRender: function(ctx) {
       if(this._image) {
         ctx.drawImage(this._image._element, 0, 0);
       }
     }*/
-    cvsRender: function(ctx) {
-      var game = enchant.Game.instance;
+    cvsRender (ctx) {
+      const game = enchant.Game.instance;
       if (this.width !== 0 && this.height !== 0) {
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        var cvs = this._image._element,
+        let cvs = this._image._element,
             sx = game.width > cvs.width ? 0 : -this._offsetX,
             sy = game.height > cvs.height ? 0 : -this._offsetY,
             dx = game.width > cvs.width ? this._offsetX : 0,
@@ -103,12 +92,12 @@ define(["resources", "decorations"], function(res, decorations) {
         ctx.restore();
       }
     }
-  })
+  }
 
-  var Map = enchant.Class.create(enchant.Map, {
+  class Map extends enchant.Map {
 
-    initialize: function(tileWidth, tileHeight) {
-      enchant.Map.call(this, tileWidth, tileHeight)
+    constructor (tileWidth, tileHeight) {
+      super(tileWidth, tileHeight)
     }/*,
 
     redraw: function(x, y, width, height) {
@@ -131,14 +120,14 @@ define(["resources", "decorations"], function(res, decorations) {
       this.__dirty = true
     }
 */
-  })
+  }
 
   return {
 
     Map: Map,
     
     floor: function(mapData, width, height) {
-      //return new FloorMap(mapData, width, height)
+      // return new FloorMap(mapData, width, height)
       
       /*
       var game = enchant.Game.instance,
@@ -149,13 +138,12 @@ define(["resources", "decorations"], function(res, decorations) {
       return map
       */
 
-      var floor = new FloorMapNode(mapData, width, height)
-      return floor
+      return new FloorMapNode(mapData, width, height)
     },
 
     walls: function(mapData) {
-      var game = enchant.Game.instance
-      map = new Map(mapData.tileSize, mapData.tileSize)
+      const game = enchant.Game.instance
+      const map = new Map(mapData.tileSize, mapData.tileSize)
       map.image = game.assets[mapData.tileImage]
       map.loadData(mapData.tileData)
       map.collisionData = buildCollisionData(map, mapData.emptyTile)
@@ -180,16 +168,16 @@ define(["resources", "decorations"], function(res, decorations) {
     },
 
     decorations: function(mapData) {
-      var tiles = mapData.tiles,
-          w = tiles[0].length,
-          h = tiles.length,
-          tw = mapData.tileSize,
-          th = mapData.tileSize,
-          decs = new enchant.Group()
-      for(var y=0; y<h; y++) {
-        for(var x=0; x<w; x++) {
-          var tile = tiles[y][x]
-          for(var type in decorations.types) {
+      const tiles = mapData.tiles,
+            w = tiles[0].length,
+            h = tiles.length,
+            tw = mapData.tileSize,
+            th = mapData.tileSize,
+            decs = new enchant.Group()
+      for(let y=0; y<h; y++) {
+        for(let x=0; x<w; x++) {
+          let tile = tiles[y][x]
+          for(let type in decorations.types) {
             if(tile == type) {
               decs.addChild(new decorations.Decoration(
                 decorations.types[type],

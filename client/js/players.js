@@ -418,7 +418,7 @@ define([
     },
 
     clearPillEffect: function(type) {
-      if(this.pillEffects[pill.type]) {
+      if(this.pillEffects[type]) {
         this.pillEffects[type].clearEffect(this)
         delete this.pillEffects[type]
       }

@@ -1,7 +1,6 @@
 define([], function() {
 
-  function particle(x, y, color, radius)
-  {
+  function Particle(x, y, color, radius) {
     this.x = x || 0
     this.y = y || 0
     this.radius = radius || 10+Math.random()*20;
@@ -12,63 +11,57 @@ define([], function() {
     this.b = color ? color.b : Math.round(Math.random()*255);
   }
 
-  var ParticleEmitter = enchant.Class.create(enchant.Entity, {
+  class ParticleEmitter extends enchant.Entity {
 
-    initialize: function() {
-      enchant.Entity.call(this)
+    constructor () {
+      super()
       this.particles = []
       this.visible = true
       this.addEventListener("enterframe", this.onEnterFrame)
-    },
-
-    onEnterFrame: function() {
-
-    },
-
-    cvsRender: function(context) {
-
     }
+    onEnterFrame () { }
+    cvsRender (context) { }
 
-  })
+  }
 
-  var Trail = enchant.Class.create(ParticleEmitter, {
+  class Trail extends ParticleEmitter {
 
-    maxRadius: 30,
-    birthFps: 5,
-    maxParticles: 5,
+    get maxRadius() { return 30 }
+    get birthFps() { return 5 }
+    get maxParticles() { return 5 }
 
-    initialize: function(player, color) {
-      ParticleEmitter.call(this)
+    constructor (player, color) {
+      super()
       this.player = player
       this.f = 0
       this.color = color || {r: 0, g: 0, b: 255}
-    },
+    }
 
-    onEnterFrame: function() {
+    onEnterFrame () {
       this.x = this.player.x
       this.y = this.player.y
       this.f++
       if(this.f > this.birthFps && this.particles.length < this.maxParticles) {
-        this.particles.push(new particle(
+        this.particles.push(new Particle(
           Math.random()*this.player.width, 
           Math.random()*this.player.height, 
           this.color
         ))
         this.f = 0
       }
-    },
+    }
 
-    cvsRender: function(context) {
+    cvsRender (context) {
       if(!this.visible) return
 
       context.save()
       //context.globalCompositeOperation = "lighter";
 
-      for(var i=0, l=this.particles.length; i<l; i++) {
-        var p = this.particles[i];
+      for(let i=0, l=this.particles.length; i<l; i++) {
+        const p = this.particles[i];
         context.beginPath();
         p.opacity = Math.round(p.remainingLife/p.life*100)/100
-        var gradient = context.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+        const gradient = context.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
         gradient.addColorStop(0, "rgba("+p.r+", "+p.g+", "+p.b+", "+p.opacity+")");
         gradient.addColorStop(0.5, "rgba("+p.r+", "+p.g+", "+p.b+", "+p.opacity+")");
         gradient.addColorStop(1, "rgba("+p.r+", "+p.g+", "+p.b+", 0)");
@@ -90,47 +83,47 @@ define([], function() {
       context.restore()
     }
 
-  })
+  }
 
-  var Pulse = enchant.Class.create(ParticleEmitter, {
+  class Pulse extends ParticleEmitter {
 
-    maxRadius: 30,
-    birthFps: 1,
-    maxParticles: 5,
+    get maxRadius() { return 30 }
+    get birthFps() { return 1 }
+    get maxParticles() { return 5 }
 
-    initialize: function(player, color) {
-      ParticleEmitter.call(this)
+    constructor (player, color) {
+      super()
       this.player = player
       this.f = 0
       this.color = color || {r: 0, g: 0, b: 255}
-    },
+    }
 
-    onEnterFrame: function() {
+    onEnterFrame () {
       this.x = this.player.x
       this.y = this.player.y
       this.f++
       if(this.f > this.birthFps && this.particles.length < this.maxParticles) {
-        this.particles.push(new particle(
+        this.particles.push(new Particle(
           this.player.w2, 
           this.player.h2, 
           this.color
         ))
         this.f = 0
       }
-    },
+    }
 
-    cvsRender: function(context) {
+    cvsRender (context) {
       if(!this.visible) return
 
       context.save()
       //context.globalCompositeOperation = "lighter";
 
-      for(var i=0, l=this.particles.length; i<l; i++) {
-        var p = this.particles[i];
+      for(let i=0, l=this.particles.length; i<l; i++) {
+        const p = this.particles[i];
         context.beginPath();
         //changing opacity according to the life.
         //opacity goes to 0 at the end of life of a particle
-        var gradient = context.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+        const gradient = context.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
         gradient.addColorStop(0.7, "rgba("+p.r+", "+p.g+", "+p.b+", 0)");
         gradient.addColorStop(0.85, "rgba("+p.r+", "+p.g+", "+p.b+", 0.5)");
         gradient.addColorStop(1, "rgba("+p.r+", "+p.g+", "+p.b+", 0)");
@@ -153,28 +146,28 @@ define([], function() {
       context.restore()
     }
 
-  })
+  }
 
-  var Ring = enchant.Class.create(ParticleEmitter, {
+  class Ring extends ParticleEmitter {
 
-    maxRadius: 20,
-    minRadius: 18,
-    birthFps: 1,
-    maxParticles: 1,
+    get maxRadius() { return 20 }
+    get minRadius() { return 18 }
+    get birthFps() { return 1 }
+    get maxParticles() { return 1 }
 
-    initialize: function(player, color) {
-      ParticleEmitter.call(this)
+    constructor (player, color) {
+      super()
       this.player = player
       this.f = 0
       this.color = color || {r: 0, g: 0, b: 255}
-    },
+    }
 
-    onEnterFrame: function() {
+    onEnterFrame () {
       this.x = this.player.x
       this.y = this.player.y
       this.f++
       if(this.f > this.birthFps && this.particles.length < this.maxParticles) {
-        var p = new particle(
+        const p = new Particle(
           this.player.w2, 
           this.player.h2, 
           this.color,
@@ -184,20 +177,20 @@ define([], function() {
         this.particles.push(p)
         this.f = 0
       }
-    },
+    }
 
-    cvsRender: function(context) {
+    cvsRender (context) {
       if(!this.visible) return
 
       context.save()
       //context.globalCompositeOperation = "lighter";
 
-      for(var i=0, l=this.particles.length; i<l; i++) {
-        var p = this.particles[i];
+      for(let i=0, l=this.particles.length; i<l; i++) {
+        const p = this.particles[i];
         context.beginPath();
         //changing opacity according to the life.
         //opacity goes to 0 at the end of life of a particle
-        var gradient = context.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+        const gradient = context.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
         gradient.addColorStop(0.7, "rgba("+p.r+", "+p.g+", "+p.b+", 0)");
         gradient.addColorStop(0.85, "rgba("+p.r+", "+p.g+", "+p.b+", 1)");
         gradient.addColorStop(1, "rgba("+p.r+", "+p.g+", "+p.b+", 0)");
@@ -217,7 +210,7 @@ define([], function() {
       context.restore()
     }
 
-  })
+  }
 
   return {
     Trail: Trail,
