@@ -1,62 +1,62 @@
-$(function() {
+(function () {
 
-  if(Math.random() > 0.75) {
-    setTimeout(function() {
-      var w = $("#wedgie").addClass("animated hinge")
-    }, 5000)    
+  function showTakenPlayers(players) {
+    for(let player of players) {
+      document
+        .querySelector(`[name=color][value=${player.color}]`)
+        .parentNode().classList.add('taken')
+    }
   }
 
-  $.getJSON("/status", function(response) {
-
-    for(var i=0; i<response.players.length; i++) {
-      var player = response.players[i]
-      $("[name=color][value=" + player.color + "]").closest("label").addClass("taken")
-    }
-
-    var startTime = response.startTime;
-    if(startTime != null) {
-
-      runtimeInterval = setInterval(function() {
+  function showGameTime(startTime) {
+    if(!startTime) return;
+    const runtimeEl = document.querySelector("#runtime")
+    const refreshRuntime = () => {
+      const now = new Date().getTime(),
+            runtime = now - startTime,
+            days = Math.floor(runtime / 1000 / 60 / 60 / 24, 10),
+            hours = Math.floor(runtime / 1000 / 60 / 60 % 24),
+            minutes = Math.floor(runtime / 1000 / 60 % 60),
+            seconds = Math.floor(runtime / 1000 % 60)
       
-        var now = new Date().getTime(),
-          runtime = now - startTime,
-          days = Math.floor(runtime / 1000 / 60 / 60 / 24, 10),
-          hours = Math.floor(runtime / 1000 / 60 / 60 % 24),
-          minutes = Math.floor(runtime / 1000 / 60 % 60),
-          seconds = Math.floor(runtime / 1000 % 60);
-
-        $("#runtime").html(
-          (days > 0 ? days + " days " : "") 
-          + (hours > 0 ? hours + "h " : "" )
-          + minutes + "min " + seconds + "s");
-
-      }, 1000);
       
+
+      runtimeEl.html(
+        (days > 0 ? days + " days " : "") 
+        + (hours > 0 ? hours + "h " : "" )
+        + minutes + "min " + seconds + "s");
     }
-  
-  
-  }).error(function() {
-    $("#rooms").html(0);
-    $("#players").html(0);
-    $("#runtime").html("Server is down at the moment");
-  });
-  
-  $("#join").click(function() {
-    
+    setInterval(refreshRuntime, 1000)
+  }
+
+  fetch('/status')
+    .then(res => res.json())
+    .then(status => {
+      showTakenPlayers(status.players)
+      showGameTime(status.startTime)
+    })
+    .catch(err => {
+      document.querySelector("#rooms").html(0);
+      document.querySelector("#players").html(0);
+      document.querySelector("#runtime").html("Server is down at the moment");  
+    })
+
+  document.querySelector('#join').addEventListener('click', () => {
     localStorage.setItem("character", JSON.stringify({
-      color: $("[name=color]:checked").val(),
-      name: $("[name=name]").val()
-    }));
+      color: document.querySelector("[name=color]:checked").value,
+      name: document.querySelector("[name=name]").value
+    }))
     
     window.location = "game.html"
-  });
-  
-  try {
-    var c = JSON.parse(localStorage.getItem("character"));
-    $("[name=color][value=" + c.color + "]").attr("checked", true).trigger("change");
-    $("[name=name]").val(c.name);
-  } catch (e) {
-    console.info("no old credentials found");
+  })
+
+  const c = localStorage.getItem("character")
+  if (c) {
+    const character = JSON.parse(c)
+    const input = document.querySelector(`[name=color][value=${character.color}]`)
+    input.checked = true
+    input.dispatchEvent(new Event('change'))
+    document.querySelector('[name=name]').value = character.name
   }
 
-});
+}());
