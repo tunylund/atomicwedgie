@@ -47,9 +47,11 @@ const httpServer = http.createServer((req, res) => {
   }
 
 });
+
+const io = socketIO(httpServer, {
+  transports: ['websocket']
+})
+io.on('connection', game.connect.bind(game));
+
 httpServer.listen(port);
-
-const io = socketIO(httpServer)
-io.sockets.on('connection', game.connect.bind(game));
-
 console.log('Server running at http://127.0.0.1:' + port + '/');

@@ -5,41 +5,41 @@ define([
   "decorations",
   "pills"], function(res, Light, Connection, decorations, pills) {
 
-  var turnSpeed = 10,
-      walkSpeed = 5,
-      banzaiWalkSpeed = 4,
-      wedgieDistance = 32,
-      banzaiDistance = 48,
-      banzaidDuration = 3500,
-      wedgiedDuration = 3500,
-      wedgieDirectionThreshold = 75, //255 max
-      updateThreshold = 3 //every 30 frames
-      hearingDistance = 200
-      to_degrees = 180/Math.PI
+  const turnSpeed = 10,
+        walkSpeed = 5,
+        banzaiWalkSpeed = 4,
+        wedgieDistance = 32,
+        banzaiDistance = 48,
+        banzaidDuration = 3500,
+        wedgiedDuration = 3500,
+        wedgieDirectionThreshold = 75, //255 max
+        updateThreshold = 3, //every 30 frames
+        hearingDistance = 200,
+        to_degrees = 180/Math.PI,
 
-      frameSequences = {
-        stand: 0,
-        banzaiStand: 1,
-        blood: [0, 1, 2, 3, 4, 5, null],
-        walk: [8, 8, 8, 9, 9, 9, 10, 10, 10, 9, 9, 9],
-        banzaiWalk: [0, 0, 0, 1, 1, 1, 2, 2, 2, 1, 1, 1],
-        walkPerformWedgie: [5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8, null],
-        performWedgie: [0, 0, 0, 1, 1, 1, 2, 2, 2, 1, 1, 1, 0, null],
-        performBanzai: [0, 2, 3, 4, 3, 2, 1, 1, null],
-        wedgie: [16, 17, 18, 19, 19, 20, 20, 20, 20, 20, null]
-      },
+        frameSequences = {
+          stand: 0,
+          banzaiStand: 1,
+          blood: [0, 1, 2, 3, 4, 5, null],
+          walk: [8, 8, 8, 9, 9, 9, 10, 10, 10, 9, 9, 9],
+          banzaiWalk: [0, 0, 0, 1, 1, 1, 2, 2, 2, 1, 1, 1],
+          walkPerformWedgie: [5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8, null],
+          performWedgie: [0, 0, 0, 1, 1, 1, 2, 2, 2, 1, 1, 1, 0, null],
+          performBanzai: [0, 2, 3, 4, 3, 2, 1, 1, null],
+          wedgie: [16, 17, 18, 19, 19, 20, 20, 20, 20, 20, null]
+        },
 
-      drawSizes = {
-        blood: {w: 64, h: 64},
-        normal: {w: 32, h: 32},
-        banzaiWalk: {w: 64, h: 32},
-        performBanzai: {w: 128, h: 64}
-      },
+        drawSizes = {
+          blood: {w: 64, h: 64},
+          normal: {w: 32, h: 32},
+          banzaiWalk: {w: 64, h: 32},
+          performBanzai: {w: 128, h: 64}
+        }
 
-      game = null
+  let game = null
 
   function normalizeAngle(angle) {
-    var result = angle
+    let result = angle
     while (result >= 360) result -= 360;
     while (result < 0) result += 360;
     return result
@@ -49,10 +49,10 @@ define([
     return Math.abs((normalizeAngle(a) + 180 - normalizeAngle(b)) % 360 - 180);
   }
 
-  var Player = enchant.Class.create(enchant.Sprite, {
+  class Player extends enchant.Sprite {
     
-    initialize: function(color) {
-      enchant.Sprite.call(this, 32, 32);
+    constructor (color) {
+      super(32, 32)
       game = game || enchant.Game.instance
       this.drawSize = drawSizes.normal
       this.color = color || "green"
@@ -71,14 +71,14 @@ define([
       this.light = new Light(this)
       this.pillEffects = {}
       this.fxs = {}
-    },
+    }
 
-    reset: function() {
+    reset () {
       this.walkSpeed = walkSpeed
       this.turnSpeed = turnSpeed
-    },
+    }
 
-    onEnterFrame: function () {
+    onEnterFrame () {
       this.checkUpdateThreshold()
       this.updateActionStatus()
       this.move()
@@ -86,13 +86,13 @@ define([
       this.controls()
       this.updateFrameSet()
       this.emitChanges()
-    }, 
+    } 
 
-    checkUpdateThreshold: function() {
+    checkUpdateThreshold () {
       this.updateThreshold--
-    },
+    }
 
-    move: function() {
+    move () {
       this.rotV = 0
 
       if(this.banzaid)
@@ -132,9 +132,9 @@ define([
         this.shouldUpdate = true
 
       }
-    }, 
+    }
 
-    _move: function() {
+    _move () {
       //http://www.helixsoft.nl/articles/circle/sincos.htm
       
       var map = game.map,
@@ -157,7 +157,7 @@ define([
           !map.collides(x, this.y, this.w2, this.h2)) {
         //don't collide with decorations
         this.x = x
-        var collidingDecorations = this.intersect(decorations.Decoration)
+        var collidingDecorations = game.decorations.childNodes.filter(decoration => this.intersect(decoration))
         if(collidingDecorations && collidingDecorations.length > 0) {
           this.x = oldX          
         }
@@ -166,7 +166,7 @@ define([
           !map.collides(this.x, y, this.w2, this.h2)) {
         this.y = y
         //don't collide with decorations
-        var collidingDecorations = this.intersect(decorations.Decoration)
+        var collidingDecorations = game.decorations.childNodes.filter(decoration => this.intersect(decoration))
         if(collidingDecorations && collidingDecorations.length > 0) {
           this.y = oldY
         }
@@ -174,9 +174,9 @@ define([
 
       this.cx = Math.floor(this.x + this.w2)
       this.cy = Math.floor(this.y + this.h2)
-    },
+    }
 
-    controls: function() {
+    controls () {
       
       if(!this.wedgied && game.input.aUp) {
         if(this.banzaiMode) {
@@ -203,15 +203,15 @@ define([
       = game.input.rightUp
       = game.input.upUp
       = game.input.downUp = false
-    },
+    }
 
-    autoPlay: function() {
+    autoPlay () {
       this.v = Math.random() > 0 ? Math.random()*this.walkSpeed : 0
       this.rotV = Math.random() > 0.5 ? 1 : -1
-    },
+    }
 
-    updateFrameSet: function() {
-      var fs = this.fs,
+    updateFrameSet () {
+      let fs = this.fs,
           img = this.image,
           drawSize = this.drawSize
       if(this.v) {
@@ -292,9 +292,9 @@ define([
       if(this.image != img) {
         this.image = img
       }
-    },
+    }
 
-    updateActionStatus: function() {
+    updateActionStatus () {
       if(this.performingWedgie && this._frameSequence.length == 0) {
         this.performingWedgie = false
       }
@@ -318,23 +318,23 @@ define([
       if(this.performingBanzai && this.frame == 1) {
         this.performBanzaiHit()
       }
-    },
+    }
 
-    performWedgie: function() {
+    performWedgie () {
       if(this.performingWedgie) return;
 
       this.performingWedgie = true
-      var enemies = game.players;
+      let enemies = game.players;
       
-      for(var i in enemies) {
-        var enemy = enemies[i]
+      for(let i in enemies) {
+        let enemy = enemies[i]
         if(enemy.id != this.id) {
           
           if(!enemy.wedgied 
             && !enemy.banzaid
             && enemy.opacity > 0 
             && enemy.within(this, wedgieDistance)) {
-            var rot = angleDifference(this.rotation, enemy.rotation)
+            let rot = angleDifference(this.rotation, enemy.rotation)
             if(rot < wedgieDirectionThreshold) {
               enemy.wedgie()
             }
@@ -343,20 +343,20 @@ define([
       }
 
       game.assets[res["performWedgie" + Math.ceil(Math.random()*4)]].play()
-    },
+    }
 
-    performBanzai: function() {
+    performBanzai () {
       if(this.performingBanzai) return;
       this.performingBanzai = true
       this.banzaiSoundPlayed = false
       this.shouldUpdate = true
-    },
+    }
 
-    performBanzaiHit: function() {
-      var enemies = game.players;
+    performBanzaiHit () {
+      let enemies = game.players;
       
-      for(var i in enemies) {
-        var enemy = enemies[i]
+      for(let i in enemies) {
+        let enemy = enemies[i]
         if(enemy.id != this.id) {
           if(!enemy.banzaid
             && enemy.opacity > 0 
@@ -371,9 +371,9 @@ define([
         game.assets[res["performBanzai" + Math.ceil(Math.random()*3)]].play()
         this.banzaiSoundPlayed = true
       }
-    },
+    }
 
-    toggleBanzaiMode: function() {
+    toggleBanzaiMode () {
       this.banzaiMode = !this.banzaiMode
       if(this.banzaiMode) {
         this.walkSpeed = banzaiWalkSpeed
@@ -382,18 +382,18 @@ define([
         this.walkSpeed = walkSpeed
       }
       this.shouldUpdate = true
-    },
+    }
 
-    wedgie: function() {
+    wedgie () {
       this.wedgied = true
       this.banzaiMode = false
       this.performingBanzai = false
       this.performingWedgie = false
       this.shouldUpdate = true
       game.assets[res["arrgh" + Math.ceil(Math.random()*4)]].play()
-    },
+    }
 
-    banzai: function() {
+    banzai () {
       this.v = this.rotV = 0
       this.banzaid = true
       this.banzaiMode = false
@@ -401,9 +401,9 @@ define([
       this.performingWedgie = false
       this.shouldUpdate = true
       game.assets[res["arrgh" + Math.ceil(Math.random()*4)]].play()
-    },
+    }
 
-    consumePill: function(pill) {
+    consumePill (pill) {
       if(!this.pillEffects[pill.type]) {
         this.pillEffects[pill.type] = pill
         pill.applyEffect(this)        
@@ -412,40 +412,40 @@ define([
       if(pill.type == "green" && Math.random() > 0.75)
         game.assets[res.uliuliuli].play()
       else {
-        var r = Math.ceil(Math.random()*3)
+        let r = Math.ceil(Math.random()*3)
         game.assets[res["pill" + r]].play()
       }
-    },
+    }
 
-    clearPillEffect: function(type) {
+    clearPillEffect (type) {
       if(this.pillEffects[type]) {
         this.pillEffects[type].clearEffect(this)
         delete this.pillEffects[type]
       }
-    },
+    }
 
-    clearDeath: function(position) {
+    clearDeath (position) {
       this.banzaid = this.wedgied = false
       this.x = position.x
       this.y = position.y
       this._updateCoordinate()
       game.shadows.clearAll()
-    },
+    }
 
-    _setFrame: function(frame) {
-      var image = this._image;
-      var row, col;
+    _setFrame (frame) {
+      let image = this._image;
+      let row, col;
       if (image != null) {
         this._frame = frame;
         row = image.width / this.drawSize.w | 0;
         this._frameLeft = (frame % row | 0) * this.drawSize.w;
         this._frameTop = (frame / row | 0) * this.drawSize.h % image.height;
       }
-    },
+    }
 
-    cvsRender: function(ctx) {
-      var img, imgdata, row, frame;
-      var sx, sy, sw, sh;
+    cvsRender (ctx) {
+      let img, imgdata, row, frame;
+      let sx, sy, sw, sh, dx, dy;
       if (this._image && this._width !== 0 && this._height !== 0) {
         frame = Math.abs(this._frame) || 0;
         img = this._image;
@@ -458,9 +458,9 @@ define([
         dy = (this._height - this.drawSize.h) / 2
         ctx.drawImage(imgdata, sx, sy, sw, sh, dx, dy, this.drawSize.w, this.drawSize.h);
       }
-    },
+    }
 
-    status: function() {
+    status () {
       return {
         rotation: this.rotation,
         rotV: this.rotV,
@@ -471,9 +471,9 @@ define([
         performingBanzai: this.performingBanzai,
         banzaiMode: this.banzaiMode
       }
-    },
+    }
 
-    update: function(status) {
+    update (status) {
       /*
       for(var type in status.pillEffects) {
         if(!this.pillEffects[type]) {
@@ -483,7 +483,7 @@ define([
         }
       }
       */
-      for(var i in status) {
+      for(let i in status) {
         this[i] = status[i]
       }
       /*
@@ -498,9 +498,9 @@ define([
       }
       */
         
-    },
+    }
 
-    emitChanges: function() {
+    emitChanges () {
 
       if(this.updateThreshold > 0)
         return
@@ -510,14 +510,14 @@ define([
         this.updateThreshold = updateThreshold
       }
       this.shouldUpdate = false
-    },
+    }
 
-    isInView: function(other) {
-      var a = Math.atan2(other.cy - this.cy, other.cx - this.cx) * to_degrees
+    isInView (other) {
+      let a = Math.atan2(other.cy - this.cy, other.cx - this.cx) * to_degrees
       return angleDifference(Math.min(this.rotation, a), Math.max(this.rotation, a)) <= this.light.angle2
-    },
+    }
 
-    remove: function() {
+    remove () {
       if(this.light) {
         this.light.remove()
         this.light = null
@@ -525,42 +525,27 @@ define([
       enchant.Sprite.remove.call(this)
     }
 
-  });
+  }
 
-  var Enemy = enchant.Class.create(Player, {
+  class Enemy extends Player {
     
-    initialize: function(color) {
-      enchant.Sprite.call(this, 32, 32);
-      game = game || enchant.Game.instance
-      this.drawSize = drawSizes.normal
-      this.color = color || "green"
-      this._suffix = this.color[0].toUpperCase() + this.color.substr(1)
-      this.image = game.assets[res["man" + this._suffix]]
-      this.frame = frameSequences.stand
-      this.addEventListener('enterframe', this.onEnterFrame)
-      
+    constructor (color) {
+      super(color);
       this.opacity = 0
-      this.rotation = 0
       this.walkSpeed = walkSpeed
       this.turnSpeed = turnSpeed
-      this.w2 = Math.floor(this.width/2)
-      this.h2 = Math.floor(this.height/2)
-
       this.x = game.width / 2 + 100
       this.y = game.height / 2
+    }
 
-      this.pillEffects = {}
-      this.fxs = {}
-    },
-
-    onEnterFrame: function () {
+    onEnterFrame () {
       this.updateActionStatus()
       this.updateVisibility()
       this.move()
       this.updateFrameSet()
-    }, 
+    }
 
-    move: function () {
+    move () {
       if(this.v) {
         this._move()
 
@@ -576,9 +561,9 @@ define([
       }
       this.cx = Math.floor(this.x + this.w2)
       this.cy = Math.floor(this.y + this.h2)
-    },
+    }
 
-    updateVisibility: function() {
+    updateVisibility () {
       if(game.shadows) {
         if(this.banzaiMode) {
           this.opacity = 1
@@ -592,33 +577,33 @@ define([
       }
       if(this.fxs["green"]) this.fxs["green"].visible = this.opacity > 0
       if(this.fxs["red"]) this.fxs["red"].visible = this.opacity > 0
-    },
+    }
 
-    wedgie: function() {
+    wedgie () {
       Player.prototype.wedgie.call(this)
       Connection.wedgie(this.id)
-    },
+    }
 
-    banzai: function() {
+    banzai () {
       Player.prototype.banzai.call(this)
       Connection.banzai(this.id)
-    },
+    }
 
-    consumePill: function(pill) {
+    consumePill (pill) {
       if(!this.pillEffects[pill.type]) {
         this.pillEffects[pill.type] = pill
         pill.applyEffect(this)        
       }
-    },
+    }
 
-    performBanzaiHit: function() {
+    performBanzaiHit () {
       //nada
     }
-  });
+  }
 
   return {
     Enemy: Enemy,
     Player: Player
   }
 
-});
+})

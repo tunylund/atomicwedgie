@@ -4,7 +4,8 @@
     for(let player of players) {
       document
         .querySelector(`[name=color][value=${player.color}]`)
-        .parentNode().classList.add('taken')
+        .parentNode
+        .classList.add('taken')
     }
   }
 
@@ -21,10 +22,10 @@
       
       
 
-      runtimeEl.html(
+      runtimeEl.innerHTML = 
         (days > 0 ? days + " days " : "") 
         + (hours > 0 ? hours + "h " : "" )
-        + minutes + "min " + seconds + "s");
+        + minutes + "min " + seconds + "s"
     }
     setInterval(refreshRuntime, 1000)
   }
@@ -36,9 +37,7 @@
       showGameTime(status.startTime)
     })
     .catch(err => {
-      document.querySelector("#rooms").html(0);
-      document.querySelector("#players").html(0);
-      document.querySelector("#runtime").html("Server is down at the moment");  
+      console.error(err)
     })
 
   document.querySelector('#join').addEventListener('click', () => {

@@ -26,7 +26,8 @@ define(["resources", "connection", "particles"], function(res, Connection, parti
     }
 
     updateVisibility () {
-      if(enchant.Game.instance.shadows) {
+      const game = enchant.Game.instance
+      if(game.shadows) {
         if(this.within(game.player, game.player.light.width)) {
           this.opacity = game.shadows.getOpacity(this) * 2.5
         } else {

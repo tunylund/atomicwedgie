@@ -64,7 +64,7 @@ msgs.format = function(msg, format) {
   };
 
 if(typeof exports != "undefined") {
-  for(var i in msgs) {
+  for(let i in msgs) {
     exports[i] = msgs[i];
   }
 }

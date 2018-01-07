@@ -1,32 +1,27 @@
 define(['texts'], function(texts) {
 
-  var ActiveTextList = enchant.Class.create({
+  class ActiveTextList {
 
-    initialize: function() {
-      var stage = document.getElementById("enchant-stage")
+    constructor () {
+      const stage = document.getElementById("enchant-stage")
       this.div = document.createElement("div")
       this.div.className = "activeTextList"
       stage.appendChild(this.div)
       this.max = 12
       this.texts = []
-      this.div.addEventListener(enchant.ENV.VENDOR_PREFIX + "TransitionEnd", function(entity) {
-        return function(e) {
-          entity.onTransitionEnd(e)
-        }
-      }(this))
-    },
+      this.div.addEventListener(enchant.ENV.VENDOR_PREFIX + "TransitionEnd", e => this.removeOldestText())
+    }
 
-    onTransitionEnd: function(e) {
-      var oldT = this.texts.splice(0, 1)
+    removeOldestText () {
+      const oldT = this.texts.splice(0, 1)
       this.div.removeChild(oldT[0])
-    },
+    }
 
-    add: function(text) {
+    add (text) {
       if(this.texts.length == this.max) {
-        var oldT = this.texts.splice(0, 1)
-        this.div.removeChild(oldT[0])
+        this.removeOldestText()
       }
-      var t = document.createElement("div")
+      const t = document.createElement("div")
       t.innerHTML = text
       this.texts.push(t)
       this.div.appendChild(t)
@@ -35,13 +30,13 @@ define(['texts'], function(texts) {
       }, 10)
     }
 
-  })
+  }
 
-  var ScoreLabel = enchant.Class.create(enchant.EventTarget, {
+  class ScoreLabel extends enchant.EventTarget {
 
-    initialize: function(labelText, x, y, score, icon, className) {
-      enchant.EventTarget.call(this)
-      var stage = document.getElementById("enchant-stage")
+    constructor (labelText, x, y, score, icon, className) {
+      super()
+      const stage = document.getElementById("enchant-stage")
       this.div = document.createElement("div")
       this.div.className = "scoreLabel " + (className || "")
       this.div.style.left = x + "px"
@@ -57,46 +52,41 @@ define(['texts'], function(texts) {
       this.score = score || 0
       this.div.appendChild(this.scoreEl)
       stage.appendChild(this.div)
-    },
+    }
 
-    score: {
-      get: function() {
-        return this._score
-      },
-      set: function(score) {
-        if(score != this._score) {
-          this._score = score
-          this.scoreEl.innerHTML = this._score          
-        }
-      }
-    },
-
-    label: {
-      get: function() {
-        return this._label
-      },
-      set: function(text) {
-        this._label.innerHTML = text
+    get score() {
+      return this._score
+    }
+    
+    set score(score) {
+      if(score != this._score) {
+        this._score = score
+        this.scoreEl.innerHTML = this._score          
       }
     }
 
-  })
+    get label() {
+      return this._label
+    }
+    set label (text) {
+      this._label.innerHTML = text
+    }
 
-  var TimeLabel = enchant.Class.create(ScoreLabel, {
+  }
 
-    initialize: function(time) {
-      ScoreLabel.call(this, "", 15, 15);
+  class TimeLabel extends ScoreLabel {
+
+    constructor (time) {
+      super("", 15, 15);
       this.div.className += " timeLabel"
       this._time = 0;
       this._count = -1;
-      this.proxy = (function(entity) {
-        return function() { entity.onEnterFrame() }
-      })(this)
+      this.proxy = () => this.onEnterFrame()
       this.time = time
-    },
+    }
 
-    onEnterFrame: function() {
-      var secs = (this._time / enchant.Game.instance.fps).toFixed(0),
+    onEnterFrame () {
+      let secs = (this._time / enchant.Game.instance.fps).toFixed(0),
           mins = Math.floor(secs / 60),
           sec = secs - (mins*60)
       
@@ -115,32 +105,30 @@ define(['texts'], function(texts) {
         this._isListening = false
         enchant.Game.instance.removeEventListener("enterframe", this.proxy)
       }
-    },
+    }
 
-    time: {
-      get: function() {
-        return Math.floor(this._time / enchant.Game.instance.fps);
-      },
-      set: function(newtime) {
-        this._time = newtime * enchant.Game.instance.fps;
-        if(!this._isListening) {
-          this._isListening = true
-          enchant.Game.instance.on("enterframe", this.proxy)
-        }
+    get time () {
+      return Math.floor(this._time / enchant.Game.instance.fps);
+    }
+    set time(newtime) {
+      this._time = newtime * enchant.Game.instance.fps;
+      if(!this._isListening) {
+        this._isListening = true
+        enchant.Game.instance.on("enterframe", this.proxy)
       }
-    },
+    }
 
-    remove: function() {
+    remove () {
       enchant.Game.instance.removeEventListener("enterframe", this.proxy)
       this.div.parentNode.removeChild(this.div)
     }
 
-  })
+  }
 
-  var ScoreTable = enchant.Class.create({
+  class ScoreTable {
 
-    initialize: function(result) {
-      var stage = document.getElementById("enchant-stage")
+    constructor (result) {
+      const stage = document.getElementById("enchant-stage")
       this.div = document.createElement("div")
       this.div.className = "scoreTable"
       this.nextGameIn = new TimeLabel(result.nextGameIn / 1000)
@@ -151,18 +139,18 @@ define(['texts'], function(texts) {
       this.scores.className = "scores"
       this.div.appendChild(this.scores)
 
-      for(var i in result.scores) {
+      for(let i in result.scores) {
         this.createScore(result.scores[i], i)
       }
 
       stage.appendChild(this.div)
-    },
+    }
 
-    createScore: function(scores, id) {
-      var player = enchant.Game.instance.players[id]
+    createScore (scores, id) {
+      const player = enchant.Game.instance.players[id]
       if(!player) return
       
-      var row = document.createElement("div"),
+      let row = document.createElement("div"),
           w = new ScoreLabel("", 0, 0, scores.wedgieCount, "wedgie"),
           b = new ScoreLabel("", 0, 0, scores.banzaiCount, "banzai"),
           d = new ScoreLabel("", 0, 0, scores.deathCount, "death"),
@@ -179,18 +167,18 @@ define(['texts'], function(texts) {
       row.appendChild(d.div)
       row.appendChild(s.div)
       this.scores.appendChild(row)
-    },
+    }
 
-    remove: function() {
+    remove () {
       this.nextGameIn.remove()
       this.div.parentNode.removeChild(this.div)
     }
 
-  })
+  }
 
-  var TouchPad = enchant.Class.create({
+  class TouchPad {
 
-    initialize: function() {
+    constructor() {
       this.div = document.createElement("div")
       this.div.className = "touchPad"
       document.body.appendChild(this.div)
@@ -202,45 +190,39 @@ define(['texts'], function(texts) {
       this.core = enchant.Game.instance
       this.input = { left: false, right: false, up: false, down: false };
 
-      this.div.addEventListener('touchstart', function(entity) {
-        return function(e) { entity.touchStart(e) }
-      }(this));
-      this.div.addEventListener('touchmove', function(entity) {
-        return function(e) { entity.touchMove(e) }
-      }(this));
-      this.div.addEventListener('touchend', function(entity) {
-        return function(e) { entity.touchEnd(e) }
-      }(this));
-    },
+      this.div.addEventListener('touchstart', e => this.touchStart(e))
+      this.div.addEventListener('touchmove', e => entity.touchMove(e))
+      this.div.addEventListener('touchend', e => entity.touchEnd(e))
+    }
 
-    touchStart: function(e) {
+    touchStart (e) {
       this._updateInput(this._detectInput(e));
       e.preventDefault();
       if (!this.core.running) {
         e.stopPropagation();
       }
       return false
-    },
+    }
 
-    touchMove: function(e) {
+    touchMove (e) {
       this._updateInput(this._detectInput(e));
       e.preventDefault();
       if (!this.core.running) {
         e.stopPropagation();
       }
       return false
-    },
+    }
 
-    touchEnd: function(e) {
+    touchEnd (e) {
       this._updateInput({ left: false, right: false, up: false, down: false });
       e.preventDefault();
       if (!this.core.running) {
         e.stopPropagation();
       }
       return false
-    },
-    _detectInput: function(e) {
-      var core = this.core,
+    }
+    _detectInput (e) {
+      let core = this.core,
           x = (e.pageX - this.x) - this.w2,
           y = (e.pageY - this.y) - this.h2,
           input = { left: false, right: false, up: false, down: false };
@@ -259,25 +241,25 @@ define(['texts'], function(texts) {
         }
       }
       return input;
-    },
-    _updateInput: function(input) {
-      var core = this.core;
-      ['left', 'right', 'up', 'down'].forEach(function(type) {
+    }
+    _updateInput (input) {
+      let core = this.core;
+      ['left', 'right', 'up', 'down'].map(type => {
         if (this.input[type] && !input[type]) {
           core.dispatchEvent(new enchant.Event(type + 'buttonup'));
         }
         if (!this.input[type] && input[type]) {
           core.dispatchEvent(new enchant.Event(type + 'buttondown'));
         }
-      }, this);
-      this.input = input;
+      })
+      this.input = input
     }
 
-  })
+  }
 
-  var TouchArrows = enchant.Class.create({
+  class TouchArrows {
 
-    initialize: function() {
+    constructor () {
       this.div = document.createElement("div")
       this.div.className = "touchArrows"
       document.body.appendChild(this.div)
@@ -294,11 +276,11 @@ define(['texts'], function(texts) {
       this.right = new TouchButton("&rarr;", "right", this.div)
     }
 
-  })
+  }
 
-  var TouchButton = enchant.Class.create({
+  class TouchButton {
 
-    initialize: function(text, type, container) {
+    constructor (text, type, container) {
       this.div = document.createElement("div")
       this.textEl = document.createElement("span")
       this.textEl.innerHTML = text
@@ -310,25 +292,20 @@ define(['texts'], function(texts) {
       
       (container || document.body).appendChild(this.div)
       
-      this.div.addEventListener('touchstart', function(entity) {
-        return function(e) { entity.touchStart(e) }
-      }(this));
-      
-      this.div.addEventListener('touchend', function(entity) {
-        return function(e) { entity.touchEnd(e) }
-      }(this));
-    },
+      this.div.addEventListener('touchstart', e => this.touchStart(e));
+      this.div.addEventListener('touchend', e => this.touchEnd(e))
+    }
 
-    touchStart: function(e) {
+    touchStart (e) {
       this.div.className = this.className + " active"
       this.core.dispatchEvent(new enchant.Event(this.type + 'buttondown'));
       e.preventDefault();
       if (!this.core.running) {
         e.stopPropagation();
       }
-    },
+    }
 
-    touchEnd: function(e) {
+    touchEnd (e) {
       this.div.className = this.className
       this.core.dispatchEvent(new enchant.Event(this.type + 'buttonup'));
       e.preventDefault();
@@ -337,45 +314,41 @@ define(['texts'], function(texts) {
       }
     }
 
-  })
+  }
 
-  var Insult = enchant.Class.create({
+  class Insult {
 
-    initialize: function(player, enemy) {
-      var stage = document.getElementById("enchant-stage")
+    constructor (player, enemy) {
+      const stage = document.getElementById("enchant-stage")
       this.div = document.createElement("div")
       this.div.className = "insult"
       this.div.innerHTML = texts[player.wedgied ? 'wedgied' : 'banzaid'](enemy)
       stage.appendChild(this.div)
-      setTimeout(function(entity) {
-        return function() { entity.remove() }
-      }(this), 5000)
-    },
+      setTimeout(() => this.remove(), 5000)
+    }
 
-    remove: function() {
+    remove () {
       this.div.parentNode.removeChild(this.div)
     }
 
-  })
+  }
 
-  var Quote = enchant.Class.create({
+  class Quote {
 
-    initialize: function() {
-      var stage = document.getElementById("enchant-stage")
+    constructor () {
+      const stage = document.getElementById("enchant-stage")
       this.div = document.createElement("div")
       this.div.className = "quote"
       this.div.innerHTML = texts.quote()
       stage.appendChild(this.div)
-      setTimeout(function(entity) {
-        return function() { entity.remove() }
-      }(this), 5000)
-    },
+      setTimeout(() => this.remove(), 5000)
+    }
 
-    remove: function() {
+    remove () {
       this.div.parentNode.removeChild(this.div)
     }
 
-  })
+  }
 
   return {
     ActiveTextList: ActiveTextList,
@@ -389,4 +362,4 @@ define(['texts'], function(texts) {
     Quote: Quote
   }
 
-});
+})

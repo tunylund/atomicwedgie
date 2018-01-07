@@ -1,6 +1,6 @@
 define([], function() {
 
-  var quotes = [
+  const quotes = [
         'Dont you know video games will ruin your mind? Look what its done to your brain!',
         'Nudge, nudge, wink, wink. Know what I mean?',
         'Ring ring ring ring ring ring ring  - Bananaphone!',
@@ -57,13 +57,13 @@ define([], function() {
       return randomFrom(quotes);
     },
     wedgied: function(enemy) {
-      return 'You got ' + randomFrom(wedgies) +' by ' + enemy.name + '!';
+      return `You got ${randomFrom(wedgies)}  by ${enemy.name}!`;
     },
     banzaid: function(enemy) {
       if(Math.random() > 0.85) {
-        return enemy.name + ' opened a can of whoopass on you!';
+        return `${enemy.name} opened a can of whoopass on you!`;
       } else {
-        return 'You got ' + randomFrom(banzais) +' by ' + enemy.name + '!';
+        return `You got ${randomFrom(banzais)} by ${enemy.name}!`;
       }
     }
   }

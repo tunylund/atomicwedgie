@@ -42,6 +42,7 @@ function emitEndGame(player) {
 }
 
 function handleJoinRequest(request, player) {
+  console.log(arguments)
   player = player || request;
   request = request || {color: "green", name: "Anonyymy lyyli"};
   player.name = request.name
@@ -138,7 +139,7 @@ exports.game = {
   
     let player = new Player(client, () => map.getSpawnPoint())
     players.push(player);
-    client.on('joinRequest', (...args) => handleJoinRequest(...args, player));
+    client.on('joinRequest', (...args) => handleJoinRequest(...args, player))
     client.on('update', (...args) => player.update(...args));
     client.on('wedgie', (...args) => wedgie(...args, player));
     client.on('banzai', (...args) => banzai(...args, player));

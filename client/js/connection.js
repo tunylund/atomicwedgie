@@ -1,4 +1,4 @@
-define(['/socket.io/socket.io.js'], function(io) {
+define([], function() {
 
   let game
   let msg
@@ -48,7 +48,9 @@ define(['/socket.io/socket.io.js'], function(io) {
       waitMsgTimeout = setTimeout(showWaitMsg, 3000);
       
       try {
-        socket = io.connect();
+        socket = io.connect({
+          transports: ['websocket']
+        });
 
         on('connect', onConnect)
         on('connect_failed', onConnectFailed)
@@ -111,7 +113,7 @@ define(['/socket.io/socket.io.js'], function(io) {
     consumePill: pill => socket.emit("consumePill", pill.id),
     update: status => socket.emit("update", status),
     join: () => {
-      const character = {}
+      let character = {}
       try {
         character = JSON.parse(localStorage.getItem("character"));
       } catch(e){

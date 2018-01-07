@@ -1,6 +1,6 @@
 define(["resources"], function(res) {
 
-  var types = {
+  const types = {
     B: {
       width: 128,
       height: 77,
@@ -69,19 +69,19 @@ define(["resources"], function(res) {
     }
   }
 
-  var Decoration = enchant.Class.create(enchant.Sprite, {
-    initialize: function(type, x, y) {
-      enchant.Sprite.call(this, type.width, type.height)
+  class Decoration extends enchant.Sprite {
+    constructor (type, x, y) {
+      super(type.width, type.height)
       this.image = enchant.Game.instance.assets[type.image]
       this.x = x
       this.y = y
       this.rotation = type.rotation || 0
     }
-  })
+  }
 
   return {
     types: types,
     Decoration: Decoration
   }
 
-});
+})
