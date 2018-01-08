@@ -6,228 +6,192 @@ define(["resources",
         "ui",
         "connection"], function(res, maps, pills, players, Shadows, ui, Connection) {
 
-  let game,
-      floor,
-      walls,
-      decorations,
-      mapStage,
-      playerStage,
-      shadows,
-      scoreTable
+  class AtomicWedgie extends enchant.Game {
 
-  function enableShadows() {
-    if(!game.shadows) {
-      game.shadows = shadows      
+    constructor(width, height) {
+      super(width, height)
+      this.fps = 60;
+      this.rootScene.addChild(new Group());
+      this.rootScene.addChild(new Group())  
+      this._players = {}
+      this._shadows = new Shadows(this.width, this.height)
+      
+      this.addEventListener(enchant.Event.LOAD, this._onLoad)
+      this.addEventListener(enchant.Event.ENTER_FRAME, this._followPlayer)
+      this.addEventListener(enchant.Event.ENTER_FRAME, this._refreshShadows)
+      this.keybind(65, 'a')
+      this.keybind(83, 'b')
+      this.addEventListener("abuttonup", e => this.input.aUp = true)
+      this.addEventListener("bbuttonup", e => this.input.bUp = true)
+      this.addEventListener(enchant.Event.LEFT_BUTTON_DOWN, e => this.input.leftUp = true)
+      this.addEventListener(enchant.Event.RIGHT_BUTTON_DOWN, e => this.input.rightUp = true)
+      this.addEventListener(enchant.Event.UP_BUTTON_DOWN, e => this.input.upUp = true)
+      this.addEventListener(enchant.Event.DOWN_BUTTON_DOWN, e => this.input.downUp = true)
     }
-  }
 
-  function onLoad() {
+    get pills () {
+      return this.playerStage.childNodes
+        .filter(node => node.applyEffect)
+    }
 
-    game.assets['pad.png'] = game.assets[res.pad]
+    findPill (id) {
+      return this.playerStage.childNodes.find(node => node.id === id)
+    }
 
-    mapStage = new Group();
-    game.rootScene.addChild(mapStage);
-
-    playerStage = new Group()
-    game.rootScene.addChild(playerStage)
-    // playerStage = mapStage
+    get player () { return this._player }
+    get players () { return this._players }
+    get shadows () { return this._shadows }
+    get mapStage () { return this.rootScene.childNodes[0] }
+    get playerStage () { return this.rootScene.childNodes[1] }
+    get hud () { return this._hud }
+    get decorations () { return this._decorations }
+    get map () { return this._map }
     
-    game.playerStage = playerStage
-    game.player = null
+    set map (map) {
+      this._map = maps.walls(map.map)
+      this.mapStage.addChild(maps.floor(map.map, this.map.width, this.map.height))
+      this.mapStage.addChild(this.map)
 
-    shadows = new Shadows(game.width, game.height)
-    game.shadows = shadows
-    //game.rootScene.addChild(shadows)
+      this._decorations = maps.decorations(map.map)
+      this.mapStage.addChild(this.decorations)
 
-    const time = new ui.TimeLabel(0),
-          texts = new ui.ActiveTextList(),
-          wedgieScoreLabel = new ui.ScoreLabel("", game.width - 105, 15, 0, "wedgie"),
-          banzaiScoreLabel = new ui.ScoreLabel("", game.width - 65, 15, 0, "banzai")
-    game.hud = {
-      lag: document.getElementById('lagValue'),
-      texts,
-      wedgieScoreLabel,
-      banzaiScoreLabel,
-      time
-    }
+      map.pills.map(p => this.newPill(p))
 
-    if(enchant.ENV.TOUCH_ENABLED) {
-      const pad = new ui.TouchArrows(),
-            wButton = new ui.TouchButton("A", "a"),
-            bButton = new ui.TouchButton("B", "b")
-      game.touch = {
-        pad: pad,
-        a: wButton,
-        b: bButton
-      }      
-    }
+      this.shadows.setWalls(this.map)
 
-    game.keybind(65, 'a')
-    game.keybind(83, 'b')
-    enchant.Core.instance.addEventListener("abuttonup", e => {
-      enchant.Game.instance.input.aUp = true
-    })
-    enchant.Core.instance.addEventListener("bbuttonup", e => {
-      enchant.Game.instance.input.bUp = true
-    })
-    enchant.Core.instance.addEventListener("leftbuttonup", e => {
-      enchant.Game.instance.input.leftUp = true
-    })
-    enchant.Core.instance.addEventListener("rightbuttonup", e => {
-      enchant.Game.instance.input.rightUp = true
-    })
-    enchant.Core.instance.addEventListener("upbuttonup", e => {
-      enchant.Game.instance.input.upUp = true
-    })
-    enchant.Core.instance.addEventListener("downbuttonup", e => {
-      enchant.Game.instance.input.downUp = true
-    })
-
-    game.addEventListener('enterframe', () => {
-      if(shadows) {
-        shadows.onEnterFrame()
+      if(this.map.width < this.width) {
+        this.mapStage.x = this.playerStage.x = this.shadows.x = Math.floor((this.width - this.map.width)/2);
+        this.mapStage.y = this.playerStage.y = this.shadows.y = Math.floor((this.height - this.map.height)/2);
+      } else {
+        this.shadows.x = this.mapStage.x
+        this.shadows.y = this.mapStage.y
       }
-    })
+    }
 
-    // follow player
-    game.addEventListener('enterframe', function(e) {
-      if(game.player && game.map.width > game.width && !scoreTable) {
-        let x = Math.floor(Math.min((game.width) / 2 - game.player.x, 0))
-        let y = Math.floor(Math.min((game.height) / 2 - game.player.y, 0))
-        x = Math.max(game.width,  x + game.map.width)  - game.map.width
-        y = Math.max(game.height, y + game.map.height) - game.map.height
-        if(mapStage.x != x || mapStage.y != y) {
-          mapStage.x = playerStage.x = shadows.x = x;
-          mapStage.y = playerStage.y = shadows.y = y;
+    _followPlayer () {
+      let game = this, map = this.map, player = this.player, scoreTable = this._scoreTable
+      if(player && map && map.width > this.width && !scoreTable) {
+        let x = Math.floor(Math.min((this.width) / 2 - player.x, 0))
+        let y = Math.floor(Math.min((this.height) / 2 - player.y, 0))
+        x = Math.max(this.width,  x + map.width)  - map.width
+        y = Math.max(this.height, y + map.height) - map.height
+        if(this.mapStage.x != x || this.mapStage.y != y) {
+          this.mapStage.x = this.playerStage.x = this.shadows.x = x;
+          this.mapStage.y = this.playerStage.y = this.shadows.y = y;
         }
       }
-    });
+    }
 
-    game.newGame = function(map, gameTime, player) {
-      game.reset()
-      game.setMap(map)
-      game.hud.time.time = gameTime / 1000
-      game.hud.wedgieScoreLabel.score = 0
-      game.hud.banzaiScoreLabel.score = 0
-      game.addPlayer(player)
-      enableShadows()
-      if(scoreTable) {
-        scoreTable.remove()
-        scoreTable = null
+    _refreshShadows () {
+      if(this.shadows) {
+        this.shadows.onEnterFrame()
       }
     }
 
-    game.players = {}
-    game.addPlayer = function(player) {
-      if(!game.player) {
-        game.players[player.id] = game.player = new players.Player(player.color)
-        shadows.addLight(game.player.light)
-        playerStage.addChild(game.player)
+    _onLoad () {
+      this._hud = ui.makeHud()
+      if(enchant.ENV.TOUCH_ENABLED) {
+        ui.makeTouchControls()
       }
-      game.player.reset()
-      game.player.x = player.x
-      game.player.y = player.y
-      game.player._updateCoordinate()
-      game.player.update(player)
-      game.player.light.refresh()
+   
+      Connection.init()
     }
-    game.addEnemy = function(enemy) {
-      game.players[enemy.id] = new players.Enemy(enemy.color)
-      game.players[enemy.id].update(enemy)
-      playerStage.insertBefore(game.players[enemy.id], game.player)
-      game.players[enemy.id]._updateCoordinate()
-      game.hud.texts.add(enemy.name + " has joined the game")
+
+    newGame (map, gameTime, player) {
+      this.shadows.reset()
+      this.map = map
+      this.hud.time.time = gameTime / 1000
+      this.hud.wedgieScoreLabel.score = 0
+      this.hud.banzaiScoreLabel.score = 0
+      this.addPlayer(player)
+      this.removeScoreTable()
     }
-    game.addEnemies = enemies => enemies.map(game.addEnemy)
-    game.trashPlayer = function(id) {
-      const player = game.players[id]
-      playerStage.removeChild(player)
-      game.players[id] = null
-      delete game.players[id]
-      game.hud.texts.add(player.name + " has left the game")
-    }
-    game.setMap = function(map) {
-      
-      walls = maps.walls(map.map)
-      game.map = walls
-      
-      floor = maps.floor(map.map, walls.width, walls.height)
-      if(!floor.div)
-        mapStage.addChild(floor)
-      game.floor = floor
-
-      mapStage.addChild(walls)
-
-      decorations = maps.decorations(map.map)
-      mapStage.addChild(decorations)
-      game.decorations = decorations
-
-      map.pills.map(this.newPill)
-
-      shadows.setWalls(walls)
-
-      if(game.map.width < game.width) {
-        mapStage.x = playerStage.x = shadows.x = Math.floor((game.width - walls.width)/2);
-        mapStage.y = playerStage.y = shadows.y = Math.floor((game.height - walls.height)/2);
-      } else {
-        shadows.x = mapStage.x
-        shadows.y = mapStage.y
-      }
-    }
-    game.endGame = function(result) {
-      game.hud.time.time = 0
-      shadows.reset()
-      if(walls) {
-        walls.remove()
-        floor.remove()
-        decorations.remove()
-        walls = floor = decorations = null
-      }
-
-      if(scoreTable) {
-        scoreTable.remove()
-        scoreTable = null
-      }
+    
+    endGame (result) {
+      this.hud.time.time = 0
+      this.shadows.reset()
+      this.mapStage.childNodes.map(node => node.remove())
+      this._map = null
+      this.removeScoreTable()
       //clearpills
-      playerStage.childNodes
-        .filter(node => node.applyEffect)
-        .map(node => node.remove())
+      this.pills.map(node => node.remove())
       
-      for(let i in game.players) {
-        let player = game.players[i]
+      for(let i in this.players) {
+        let player = this.players[i]
         for(let type in player.pillEffects) {
           player.clearPillEffect(type)
         }
       }
 
-      scoreTable = new ui.ScoreTable(result)
+      this._scoreTable = new ui.ScoreTable(result)
     }
-    game.reset = function() {
-      game.shadows.reset()
+
+    removeScoreTable () {
+      if(this._scoreTable) {
+        this._scoreTable.remove()
+        this._scoreTable = null
+      }
     }
-    game.insult = function(enemyId) {
-      game.assets[res["laugh" + Math.ceil(Math.random()*6)]].play()
-      new ui.Insult(game.player, game.players[enemyId])
-      new ui.Quote()
+    
+    addPlayer (player) {
+      if(!this.player) {
+        this.players[player.id] = this._player = new players.Player(player.color)
+        this.shadows.addLight(this.player.light)
+        this.playerStage.addChild(this.player)
+      }
+      this.player.reset()
+      this.player.x = player.x
+      this.player.y = player.y
+      this.player._updateCoordinate()
+      this.player.update(player)
+      this.player.light.refresh()
     }
-    game.newPill = function(pill) {
+
+
+    addEnemy (enemy) {
+      this.players[enemy.id] = new players.Enemy(enemy.color)
+      this.players[enemy.id].update(enemy)
+      this.playerStage.insertBefore(this.players[enemy.id], this.player)
+      this.players[enemy.id]._updateCoordinate()
+      this.hud.texts.add(enemy.name + " has joined the game")
+    }
+
+    addEnemies (enemies) {
+      enemies.map(e => this.addEnemy(e))
+    }
+
+    trashPlayer (id) {
+      const player = this.players[id]
+      this.playerStage.removeChild(player)
+      this.players[id] = null
+      delete this.players[id]
+      this.hud.texts.add(player.name + " has left the game")
+    }
+  
+    newPill (pill) {
       const p = pills.create(pill)
-      playerStage.addChild(p)
+      this.playerStage.addChild(p)
       p._updateCoordinate()
     }
-    game.consumePill = function(playerId, pillId) {
-      const node = playerStage.childNodes.find(node => node.id === pillId)
+
+    delPill (pillId) {
+      const node = this.findPill(pillId)
+      if (node) this.playerStage.removeChild(node)
+    }
+
+    consumePill (playerId, pillId) {
+      const node = this.findPill(pillId)
       if (node) {
-        game.players[playerId].consumePill(node)
+        this.players[playerId].consumePill(node)
         node.remove()
       }
     }
-    game.delPill = function(pillId) {
-      const node = playerStage.childNodes.find(node => node.id === pillId)
-      if (node) playerStage.removeChild(node)
-    }
 
-    Connection.init()
+    insult (enemyId) {
+      this.assets[res["laugh" + Math.ceil(Math.random()*6)]].play()
+      new ui.Insult(this.player, this.players[enemyId])
+      new ui.Quote()
+    }
 
   }
 
@@ -237,15 +201,10 @@ define(["resources",
       const width = window.innerWidth < 800 && enchant.ENV.TOUCH_ENABLED ? 400 : 800,
             height = window.innerHeight < 600 && enchant.ENV.TOUCH_ENABLED ? 300 : 600,
             scale = 1
-      game = new Game(width, height)
-      //game.scale = window.innerWidth < 800 && enchant.ENV.TOUCH_ENABLED  ? 0.2 : 1
-      //game.scale = scale
-      //game.rootScene.scaleX = game.rootScene.scaleY = scale
-      game.fps = 60;
+      const game = new AtomicWedgie(width, height)
       for(let key in res) {
         game.preload(res[key])
       }
-      game.onload = onLoad
       game.start()
     }
 

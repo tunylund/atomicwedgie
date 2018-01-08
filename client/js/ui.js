@@ -351,15 +351,34 @@ define(['texts'], function(texts) {
   }
 
   return {
-    ActiveTextList: ActiveTextList,
-    ScoreLabel: ScoreLabel,
-    TimeLabel: TimeLabel,
-    ScoreTable: ScoreTable,
-    TouchArrows: TouchArrows,
-    TouchPad: TouchPad,
-    TouchButton: TouchButton,
-    Insult: Insult,
-    Quote: Quote
+    ActiveTextList,
+    ScoreLabel,
+    TimeLabel,
+    ScoreTable,
+    TouchArrows,
+    TouchPad,
+    TouchButton,
+    Insult,
+    Quote,
+
+    makeHud: () => {
+      const game = enchant.Game.instance
+      return {
+        lag: document.getElementById('lagValue'),
+        texts: new ActiveTextList(),
+        wedgieScoreLabel: new ScoreLabel("", game.width - 105, 15, 0, "wedgie"),
+        banzaiScoreLabel: new ScoreLabel("", game.width - 65, 15, 0, "banzai"),
+        time: new TimeLabel(0)
+      }
+    },
+
+    makeTouchControls: () => {
+      return {
+        pad: new TouchArrows(),
+        a: new TouchButton("A", "a"),
+        b: new TouchButton("B", "b")
+      }
+    }     
   }
 
 })

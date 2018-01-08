@@ -38,7 +38,6 @@ define([], function() {
     pillBlue: "img/decorations/pilleri sininen.gif",
     pillYellow: "img/decorations/pilleri keltainen.gif",
     lightCone: "img/lights/conelight_1.png",
-    font: 'lib/wise9-enchant.js-0773f82/images/font2.png',
     pad: 'img/pad.png',
 
     biliardTable: 'img/decorations/biljardipöytä.gif',

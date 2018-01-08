@@ -26,32 +26,6 @@ define(["resources", "decorations"], function(res, decorations) {
     return new Array(cy).fill(0).map(x => new Array(cx).fill(0))
   }
 
-  class FloorMap {
-    constructor(mapData, width, height) {
-      const game = enchant.Game.instance
-      this.div = document.createElement("div")
-      this.div.className = "floorMap"
-      this.div.style.backgroundImage = "url(" + mapData.floorImage + ")"
-      this.div.style.left = (game.width > width ? (game.width - width) / 2 : 0) + "px"
-      this.div.style.top = (game.height > height ? (game.height - height) / 2 : 0) + "px"
-      this.div.style.width = (game.width > width ? width : game.width) + "px"
-      this.div.style.height = (game.height > height ? height : game.height) + "px"
-
-      game._element.insertBefore(this.div, game._element.childNodes[0])
-    }
-
-    draw() {
-      if(this.x || this.y) {
-        this.div.style.backgroundPosition = this.x + "px " + this.y + "px"
-      }
-    }
-
-    remove() {
-      this.div.parentNode.removeChild(this.div)
-      this.div = null
-    }
-  }
-
   class FloorMapNode extends enchant.Node {
 
     constructor (mapData, width, height) {
@@ -71,77 +45,17 @@ define(["resources", "decorations"], function(res, decorations) {
         ctx.drawImage(this._image._element, 0, 0);
       }
     }
-    // cvsRender (ctx) {
-    //   const game = enchant.Game.instance;
-    //   if (this.width !== 0 && this.height !== 0) {
-    //     ctx.save();
-    //     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    //     let cvs = this._image._element,
-    //         sx = game.width > cvs.width ? 0 : -this._offsetX,
-    //         sy = game.height > cvs.height ? 0 : -this._offsetY,
-    //         dx = game.width > cvs.width ? this._offsetX : 0,
-    //         dy = game.height > cvs.height ? this._offsetY : 0
-    //     ctx.drawImage(
-    //       cvs, 
-    //       sx, sy, 
-    //       Math.min(game.width, cvs.width), 
-    //       Math.min(game.height, cvs.height), 
-    //       dx, dy, 
-    //       Math.min(game.width, cvs.width), 
-    //       Math.min(game.height, cvs.height));
-    //     ctx.restore();
-    //   }
-    // }
-  }
-
-  class Map extends enchant.Map {
-
-    constructor (tileWidth, tileHeight) {
-      super(tileWidth, tileHeight)
-    }/*,
-
-    redraw: function(x, y, width, height) {
-      enchant.Map.prototype.redraw.call(this, x, y, width, height)
-      //this._dirty = false
-    }
-
-    /*,
-
-    _dirty: {
-      get: function() {
-        return this.__dirty
-      },
-      set: function(d, force) {
-        //if(force) this.__dirty = d
-      }
-    },
-
-    forceDirty: function() {
-      this.__dirty = true
-    }
-*/
   }
 
   return {
-
-    Map: Map,
     
     floor: function(mapData, width, height) {
-      // return new FloorMap(mapData, width, height)
-      
-      // var game = enchant.Game.instance,
-      //     img = game.assets[mapData.floorImage]
-      //     map = new Map(img.width, img.height)
-      // map.image = game.assets[mapData.floorImage]
-      // map.loadData(buildFloorData(map, mapData))
-      // return map
-
       return new FloorMapNode(mapData, width, height)
     },
 
     walls: function(mapData) {
       const game = enchant.Game.instance
-      const map = new Map(mapData.tileSize, mapData.tileSize)
+      const map = new enchant.Map(mapData.tileSize, mapData.tileSize)
       map.image = game.assets[mapData.tileImage]
       map.loadData(mapData.tileData)
       map.collisionData = buildCollisionData(map, mapData.emptyTile)
