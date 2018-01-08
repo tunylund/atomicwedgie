@@ -66,32 +66,32 @@ define(["resources", "decorations"], function(res, decorations) {
       }
     }
 
-    /*cvsRender: function(ctx) {
+    cvsRender (ctx) {
       if(this._image) {
         ctx.drawImage(this._image._element, 0, 0);
       }
-    }*/
-    cvsRender (ctx) {
-      const game = enchant.Game.instance;
-      if (this.width !== 0 && this.height !== 0) {
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        let cvs = this._image._element,
-            sx = game.width > cvs.width ? 0 : -this._offsetX,
-            sy = game.height > cvs.height ? 0 : -this._offsetY,
-            dx = game.width > cvs.width ? this._offsetX : 0,
-            dy = game.height > cvs.height ? this._offsetY : 0
-        ctx.drawImage(
-          cvs, 
-          sx, sy, 
-          Math.min(game.width, cvs.width), 
-          Math.min(game.height, cvs.height), 
-          dx, dy, 
-          Math.min(game.width, cvs.width), 
-          Math.min(game.height, cvs.height));
-        ctx.restore();
-      }
     }
+    // cvsRender (ctx) {
+    //   const game = enchant.Game.instance;
+    //   if (this.width !== 0 && this.height !== 0) {
+    //     ctx.save();
+    //     ctx.setTransform(1, 0, 0, 1, 0, 0);
+    //     let cvs = this._image._element,
+    //         sx = game.width > cvs.width ? 0 : -this._offsetX,
+    //         sy = game.height > cvs.height ? 0 : -this._offsetY,
+    //         dx = game.width > cvs.width ? this._offsetX : 0,
+    //         dy = game.height > cvs.height ? this._offsetY : 0
+    //     ctx.drawImage(
+    //       cvs, 
+    //       sx, sy, 
+    //       Math.min(game.width, cvs.width), 
+    //       Math.min(game.height, cvs.height), 
+    //       dx, dy, 
+    //       Math.min(game.width, cvs.width), 
+    //       Math.min(game.height, cvs.height));
+    //     ctx.restore();
+    //   }
+    // }
   }
 
   class Map extends enchant.Map {
@@ -129,14 +129,12 @@ define(["resources", "decorations"], function(res, decorations) {
     floor: function(mapData, width, height) {
       // return new FloorMap(mapData, width, height)
       
-      /*
-      var game = enchant.Game.instance,
-          img = game.assets[mapData.floorImage]
-          map = new Map(img.width, img.height)
-      map.image = game.assets[mapData.floorImage]
-      map.loadData(buildFloorData(map, mapData))
-      return map
-      */
+      // var game = enchant.Game.instance,
+      //     img = game.assets[mapData.floorImage]
+      //     map = new Map(img.width, img.height)
+      // map.image = game.assets[mapData.floorImage]
+      // map.loadData(buildFloorData(map, mapData))
+      // return map
 
       return new FloorMapNode(mapData, width, height)
     },

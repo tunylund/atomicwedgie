@@ -16,9 +16,9 @@ function initNewGame() {
 }
 
 function endGame() {
+  newGameTimeout.start()
   players.map(emitEndGame)
   map.remove()
-  newGameTimeout.start()
 }
 
 function emitNewGame(player) {
@@ -42,7 +42,6 @@ function emitEndGame(player) {
 }
 
 function handleJoinRequest(request, player) {
-  console.log(arguments)
   player = player || request;
   request = request || {color: "green", name: "Anonyymy lyyli"};
   player.name = request.name
@@ -136,16 +135,23 @@ exports.game = {
     if(players.length == 0) {
       initNewGame();
     }
+
+    const on = (ev, fn) => {
+      client.on(ev, (...args) => {
+        console.log(`${ev} received`, ...args)
+        fn(...args)
+      })
+    }
   
     let player = new Player(client, () => map.getSpawnPoint())
     players.push(player);
-    client.on('joinRequest', (...args) => handleJoinRequest(...args, player))
+    on('joinRequest', (...args) => handleJoinRequest(...args, player))
     client.on('update', (...args) => player.update(...args));
-    client.on('wedgie', (...args) => wedgie(...args, player));
-    client.on('banzai', (...args) => banzai(...args, player));
-    client.on('consumePill', (...args) => consumePill(...args, player))
-    client.on('message', (...args) => handleMessage(...args, player))
-    client.on('disconnect', () => disconnect(player))
+    on('wedgie', (...args) => wedgie(...args, player));
+    on('banzai', (...args) => banzai(...args, player));
+    on('consumePill', (...args) => consumePill(...args, player))
+    on('message', (...args) => handleMessage(...args, player))
+    on('disconnect', () => disconnect(player))
   }
 
 };

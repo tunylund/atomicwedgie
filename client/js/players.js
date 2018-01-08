@@ -5,15 +5,14 @@ define([
   "decorations",
   "pills"], function(res, Light, Connection, decorations, pills) {
 
-  const turnSpeed = 10,
-        walkSpeed = 5,
-        banzaiWalkSpeed = 4,
+  // /3 because fps was tripled
+  const turnSpeed = 10 / 3,
+        walkSpeed = 6 / 3,
+        banzaiWalkSpeed = 4 / 3,
         wedgieDistance = 32,
         banzaiDistance = 48,
-        banzaidDuration = 3500,
-        wedgiedDuration = 3500,
         wedgieDirectionThreshold = 75, //255 max
-        updateThreshold = 3, //every 30 frames
+        updateThreshold = 3 * 3, //every 30 frames
         hearingDistance = 200,
         to_degrees = 180/Math.PI,
 
@@ -35,6 +34,15 @@ define([
           banzaiWalk: {w: 64, h: 32},
           performBanzai: {w: 128, h: 64}
         }
+
+  // triple animation durations because fps was tripled
+  for (let name in frameSequences) {
+    if (frameSequences[name].map) {
+      frameSequences[name] = frameSequences[name]
+      .map(frame => frame != null ? [frame, frame, frame] : [frame])
+      .reduce((memo, frames) => memo.concat(frames), [])
+    }
+  }
 
   let game = null
 
@@ -60,6 +68,7 @@ define([
       this.image = game.assets[res["man" + this._suffix]]
       this.frame = frameSequences.stand
       this.addEventListener('enterframe', this.onEnterFrame)
+      this.addEventListener(enchant.Event.ANIMATION_END, this.endAnimation)
 
       this.walksps = Math.ceil(game.fps/2)
       this.rotation = 0
@@ -81,7 +90,10 @@ define([
     onEnterFrame () {
       this.checkUpdateThreshold()
       this.updateActionStatus()
-      this.move()
+      if(game.autoPlay)
+        this.autoPlay()
+      else
+        this.move()
       this.light.refresh()
       this.controls()
       this.updateFrameSet()
@@ -106,7 +118,7 @@ define([
         this.rotV = 1
         this.rotation += this.turnSpeed
         this.shouldUpdate = true
-      } 
+      }
 
       this.v = 0;
       if (game.input.up) {
@@ -115,17 +127,10 @@ define([
         this.v = -this.walkSpeed/2;
       }
 
-      if(game.autoPlay)
-        this.autoPlay()
-
       if (this.v) {
 
-        if(this.speedMultiplier) {
-          this.v *= this.speedMultiplier
-        }
-
         this._move()
-
+        
         if(game.frame % Math.ceil(this.walksps/this.speedMultiplier) == 0)
           game.assets[res["walk" + Math.ceil(Math.random()*3)]].play(true)
       
@@ -137,37 +142,37 @@ define([
     _move () {
       //http://www.helixsoft.nl/articles/circle/sincos.htm
       
-      var map = game.map,
-          rot = normalizeAngle(this.rotation)
+      let map = game.map,
+          rot = normalizeAngle(this.rotation),
+          decorations = game.decorations.childNodes
+
+      if(this.speedMultiplier) {
+        this.v *= this.speedMultiplier
+      }
 
       rot = rot / 180 * Math.PI
 
-      var velX = this.v * Math.cos(rot),
+      let velX = this.v * Math.cos(rot),
           velY = this.v * Math.sin(rot),
           oldX = this.x,
           oldY = this.y,
           x = this.x + velX,
           y = this.y + velY
 
-      //collision rect
-      //enchant.Game.instance.shadows.surface.context.fillRect(x, y, this.width, this.height)
-      
       //keep in map and don't collide with walls
       if (map.isWithin(x, this.y, this.width, this.height) && 
           !map.collides(x, this.y, this.w2, this.h2)) {
         //don't collide with decorations
         this.x = x
-        var collidingDecorations = game.decorations.childNodes.filter(decoration => this.intersect(decoration))
-        if(collidingDecorations && collidingDecorations.length > 0) {
-          this.x = oldX          
+        if(decorations.filter(d => this.intersect(d)).length > 0) {
+          this.x = oldX
         }
       }
       if (map.isWithin(this.x, y, this.width, this.height) && 
           !map.collides(this.x, y, this.w2, this.h2)) {
         this.y = y
         //don't collide with decorations
-        var collidingDecorations = game.decorations.childNodes.filter(decoration => this.intersect(decoration))
-        if(collidingDecorations && collidingDecorations.length > 0) {
+        if(decorations.filter(d => this.intersect(d)).length > 0) {
           this.y = oldY
         }
       }
@@ -181,8 +186,7 @@ define([
       if(!this.wedgied && game.input.aUp) {
         if(this.banzaiMode) {
           this.performBanzai()
-        } 
-        else {
+        } else if(!this.banzaiMode) {
           this.performWedgie()
         }
       }
@@ -191,6 +195,7 @@ define([
       if(!this.wedgied && game.input.bUp) {
         this.toggleBanzaiMode()
       }
+
       game.input.bUp = false
 
       if(game.input.leftUp
@@ -207,7 +212,14 @@ define([
 
     autoPlay () {
       this.v = Math.random() > 0 ? Math.random()*this.walkSpeed : 0
-      this.rotV = Math.random() > 0.5 ? 1 : -1
+      if (Math.random() > 0.5) {
+        this.rotation += this.turnSpeed
+        this.rotV = 1
+      } else {
+        this.rotation -= this.turnSpeed
+        this.rotV = -1
+      }
+      this._move()
     }
 
     updateFrameSet () {
@@ -252,8 +264,7 @@ define([
           fs = frameSequences.performBanzai
           img = game.assets[res["man" + this._suffix + "PerformBanzai"]]
           drawSize = drawSizes.performBanzai
-        }
-        else if(this.banzaid) {
+        } else if(this.banzaid) {
           fs = frameSequences.blood
           img = game.assets[res.blood]
           drawSize = drawSizes.blood
@@ -285,8 +296,7 @@ define([
         this.drawSize = drawSize
       }
       if(this.fs != fs) {
-        this.fs = fs
-        this.frame = [].slice.call(fs)
+        this.fs = this.frame = fs
         this.shouldUpdate = true
       }
       if(this.image != img) {
@@ -294,27 +304,24 @@ define([
       }
     }
 
+    endAnimation () {
+      this.performingWedgie = false
+      this.performingBanzai = false
+    }
+
     updateActionStatus () {
-      if(this.performingWedgie && this._frameSequence.length == 0) {
+      if (this.performingWedgie && this._frameSequence === null) {
         this.performingWedgie = false
       }
-      if(this.performBanzai && this._frameSequence.length == 0) {
+      if (this.performingBanzai && this._frameSequence === null) {
         this.performingBanzai = false
       }
-      if(this.wedgied && this._frameSequence.length == 0) {
-        /*
-        setTimeout((function(entity) {
-          return function() { entity.wedgied = false }
-        })(this), wedgiedDuration)
-        */
-      }
-      if(this.banzaid && this._frameSequence.length == 0) {
-        /*
-        setTimeout((function(entity) {
-          return function() { entity.banzaid = false }
-        })(this), banzaidDuration)
-        */
-      }
+      // if (this.wedgied && this._frameSequence === null) {
+      //   this.wedgied = false
+      // }
+      // if (this.banzaid && this._frameSequence === null) {
+      //   this.banzaid = false
+      // }
       if(this.performingBanzai && this.frame == 1) {
         this.performBanzaiHit()
       }
@@ -391,6 +398,9 @@ define([
       this.performingWedgie = false
       this.shouldUpdate = true
       game.assets[res["arrgh" + Math.ceil(Math.random()*4)]].play()
+      for (let type in this.pillEffects) {
+        this.clearPillEffect(type)
+      }
     }
 
     banzai () {
@@ -401,6 +411,9 @@ define([
       this.performingWedgie = false
       this.shouldUpdate = true
       game.assets[res["arrgh" + Math.ceil(Math.random()*4)]].play()
+      for (let type in this.pillEffects) {
+        this.clearPillEffect(type)
+      }
     }
 
     consumePill (pill) {
@@ -432,31 +445,32 @@ define([
       game.shadows.clearAll()
     }
 
-    _setFrame (frame) {
+    _computeFramePosition () {
       let image = this._image;
-      let row, col;
+      let row;
       if (image != null) {
-        this._frame = frame;
         row = image.width / this.drawSize.w | 0;
-        this._frameLeft = (frame % row | 0) * this.drawSize.w;
-        this._frameTop = (frame / row | 0) * this.drawSize.h % image.height;
+        this._frameLeft = (this._frame % row | 0) * this.drawSize.w;
+        this._frameTop = (this._frame / row | 0) * this.drawSize.h % image.height;
       }
     }
 
     cvsRender (ctx) {
-      let img, imgdata, row, frame;
+      let img, row;
       let sx, sy, sw, sh, dx, dy;
+      let elem, ih, iw
       if (this._image && this._width !== 0 && this._height !== 0) {
-        frame = Math.abs(this._frame) || 0;
         img = this._image;
-        imgdata = img._element;
+        ih = img.height
+        iw = img.width
+        elem = img._element;
         sx = this._frameLeft;
-        sy = Math.min(this._frameTop, img.height - this.drawSize.h);
-        sw = Math.min(img.width - sx, this.drawSize.w);
-        sh = Math.min(img.height - sy, this.drawSize.h);
+        sy = Math.min(this._frameTop, ih - this.drawSize.h);
+        sw = Math.min(iw - sx, this.drawSize.w);
+        sh = Math.min(ih - sy, this.drawSize.h);
         dx = (this._width - this.drawSize.w) / 2
         dy = (this._height - this.drawSize.h) / 2
-        ctx.drawImage(imgdata, sx, sy, sw, sh, dx, dy, this.drawSize.w, this.drawSize.h);
+        ctx.drawImage(elem, sx, sy, sw, sh, dx, dy, this.drawSize.w, this.drawSize.h);
       }
     }
 
@@ -474,30 +488,9 @@ define([
     }
 
     update (status) {
-      /*
-      for(var type in status.pillEffects) {
-        if(!this.pillEffects[type]) {
-          this.pillEffects[type] = pills.apply(type, this)
-        } else {
-
-        }
-      }
-      */
       for(let i in status) {
         this[i] = status[i]
-      }
-      /*
-      this.v = status.v <= maxv ? status.v : this.v;
-      this.rotation = status.rotation
-      this.x = status.x;
-      this.y = status.y;
-      this.isDead = status.isDead;
-      if(status.isStriking && !this.isStriking) {
-        this.counter = 0;
-        this.isStriking = true;
-      }
-      */
-        
+      }  
     }
 
     emitChanges () {
@@ -539,7 +532,6 @@ define([
     }
 
     onEnterFrame () {
-      this.updateActionStatus()
       this.updateVisibility()
       this.move()
       this.updateFrameSet()

@@ -2,9 +2,9 @@ const u = require('./utils'),
       texts = require('./texts'),
       Timer = u.Timer
 
-const turnSpeed = 10,
-      walkSpeed = 5,
-      banzaiWalkSpeed = 3,
+const turnSpeed = 10/3,
+      walkSpeed = 6/3,
+      banzaiWalkSpeed = 4/3,
       wedgieDistance = 32,
       banzaiDistance = 48,
       banzaidDuration = 3500,

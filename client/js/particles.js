@@ -4,7 +4,7 @@ define([], function() {
     this.x = x || 0
     this.y = y || 0
     this.radius = radius || 10+Math.random()*20;
-    this.life = 20+Math.random()*10;
+    this.life = 20+Math.random()*10 * 3;
     this.remainingLife = this.life;
     this.r = color ? color.r : Math.round(Math.random()*255);
     this.g = color ? color.g : Math.round(Math.random()*255);
@@ -27,7 +27,7 @@ define([], function() {
   class Trail extends ParticleEmitter {
 
     get maxRadius() { return 30 }
-    get birthFps() { return 5 }
+    get birthFps() { return 5*3 }
     get maxParticles() { return 5 }
 
     constructor (player, color) {
@@ -88,7 +88,7 @@ define([], function() {
   class Pulse extends ParticleEmitter {
 
     get maxRadius() { return 30 }
-    get birthFps() { return 1 }
+    get birthFps() { return 1*6 }
     get maxParticles() { return 5 }
 
     constructor (player, color) {
@@ -128,13 +128,12 @@ define([], function() {
         gradient.addColorStop(0.85, "rgba("+p.r+", "+p.g+", "+p.b+", 0.5)");
         gradient.addColorStop(1, "rgba("+p.r+", "+p.g+", "+p.b+", 0)");
         context.fillStyle = gradient
-        //a gradient instead of white fill
         context.arc(p.x, p.y, p.radius, Math.PI*2, false);
         context.fill();
         
         //lets move the particles
         p.remainingLife--;
-        p.radius++;
+        p.radius = p.radius + 1/3;
         
         //regenerate particles
         if(p.remainingLife < 0 || p.radius > this.maxRadius) {
@@ -152,7 +151,7 @@ define([], function() {
 
     get maxRadius() { return 20 }
     get minRadius() { return 18 }
-    get birthFps() { return 1 }
+    get birthFps() { return 1*6 }
     get maxParticles() { return 1 }
 
     constructor (player, color) {
@@ -200,7 +199,7 @@ define([], function() {
         context.fill();
         
         //lets move the particles
-        p.radius += p.direction;
+        p.radius += p.direction/3;
         
         //regenerate particles
         if(p.radius > this.maxRadius || p.radius < this.minRadius) {

@@ -1,6 +1,6 @@
 define(["resources", "connection", "particles"], function(res, Connection, particles) {
 
-  const turnSpeed = 10
+  const turnSpeed = 10 / 3
 
   class Pill extends enchant.Sprite {
 

@@ -6,7 +6,7 @@ define(["resources",
         "ui",
         "connection"], function(res, maps, pills, players, Shadows, ui, Connection) {
 
-  var game,
+  let game,
       floor,
       walls,
       decorations,
@@ -30,6 +30,8 @@ define(["resources",
 
     playerStage = new Group()
     game.rootScene.addChild(playerStage)
+    // playerStage = mapStage
+    
     game.playerStage = playerStage
     game.player = null
 
@@ -37,22 +39,22 @@ define(["resources",
     game.shadows = shadows
     //game.rootScene.addChild(shadows)
 
-    var time = new ui.TimeLabel(0),
-        texts = new ui.ActiveTextList(),
-        wedgieScoreLabel = new ui.ScoreLabel("", game.width - 105, 15, 0, "wedgie"),
-        banzaiScoreLabel = new ui.ScoreLabel("", game.width - 65, 15, 0, "banzai")
+    const time = new ui.TimeLabel(0),
+          texts = new ui.ActiveTextList(),
+          wedgieScoreLabel = new ui.ScoreLabel("", game.width - 105, 15, 0, "wedgie"),
+          banzaiScoreLabel = new ui.ScoreLabel("", game.width - 65, 15, 0, "banzai")
     game.hud = {
       lag: document.getElementById('lagValue'),
-      texts: texts,
-      wedgieScoreLabel: wedgieScoreLabel,
-      banzaiScoreLabel: banzaiScoreLabel,
-      time: time
+      texts,
+      wedgieScoreLabel,
+      banzaiScoreLabel,
+      time
     }
 
     if(enchant.ENV.TOUCH_ENABLED) {
-      var pad = new ui.TouchArrows(),
-          wButton = new ui.TouchButton("A", "a"),
-          bButton = new ui.TouchButton("B", "b")
+      const pad = new ui.TouchArrows(),
+            wButton = new ui.TouchButton("A", "a"),
+            bButton = new ui.TouchButton("B", "b")
       game.touch = {
         pad: pad,
         a: wButton,
@@ -62,45 +64,42 @@ define(["resources",
 
     game.keybind(65, 'a')
     game.keybind(83, 'b')
-    enchant.Core.instance.addEventListener("abuttonup", function(e) {
+    enchant.Core.instance.addEventListener("abuttonup", e => {
       enchant.Game.instance.input.aUp = true
     })
-    enchant.Core.instance.addEventListener("bbuttonup", function(e) {
+    enchant.Core.instance.addEventListener("bbuttonup", e => {
       enchant.Game.instance.input.bUp = true
     })
-    enchant.Core.instance.addEventListener("leftbuttonup", function(e) {
+    enchant.Core.instance.addEventListener("leftbuttonup", e => {
       enchant.Game.instance.input.leftUp = true
     })
-    enchant.Core.instance.addEventListener("rightbuttonup", function(e) {
+    enchant.Core.instance.addEventListener("rightbuttonup", e => {
       enchant.Game.instance.input.rightUp = true
     })
-    enchant.Core.instance.addEventListener("upbuttonup", function(e) {
+    enchant.Core.instance.addEventListener("upbuttonup", e => {
       enchant.Game.instance.input.upUp = true
     })
-    enchant.Core.instance.addEventListener("downbuttonup", function(e) {
+    enchant.Core.instance.addEventListener("downbuttonup", e => {
       enchant.Game.instance.input.downUp = true
     })
 
-    //follow player
+    game.addEventListener('enterframe', () => {
+      if(shadows) {
+        shadows.onEnterFrame()
+      }
+    })
+
+    // follow player
     game.addEventListener('enterframe', function(e) {
       if(game.player && game.map.width > game.width && !scoreTable) {
-        var x = Math.floor(Math.min((game.width  - 16) / 2 - game.player.x, 0));
-        var y = Math.floor(Math.min((game.height - 16) / 2 - game.player.y, 0));
-        x = Math.max(game.width,  x + game.map.width)  - game.map.width;
-        y = Math.max(game.height, y + game.map.height) - game.map.height;
+        let x = Math.floor(Math.min((game.width) / 2 - game.player.x, 0))
+        let y = Math.floor(Math.min((game.height) / 2 - game.player.y, 0))
+        x = Math.max(game.width,  x + game.map.width)  - game.map.width
+        y = Math.max(game.height, y + game.map.height) - game.map.height
         if(mapStage.x != x || mapStage.y != y) {
           mapStage.x = playerStage.x = shadows.x = x;
           mapStage.y = playerStage.y = shadows.y = y;
-          if(floor.draw) {
-            floor.x = x
-            floor.y = y
-            floor.draw()
-          }
         }
-        
-      }
-      if(shadows) {
-        shadows.onEnterFrame()
       }
     });
 
@@ -139,13 +138,9 @@ define(["resources",
       game.players[enemy.id]._updateCoordinate()
       game.hud.texts.add(enemy.name + " has joined the game")
     }
-    game.addEnemies = function(enemies) {
-      for(var i=0; i<enemies.length; i++) {
-        game.addEnemy(enemies[i])
-      }
-    }
+    game.addEnemies = enemies => enemies.map(game.addEnemy)
     game.trashPlayer = function(id) {
-      var player = game.players[id]
+      const player = game.players[id]
       playerStage.removeChild(player)
       game.players[id] = null
       delete game.players[id]
@@ -167,9 +162,7 @@ define(["resources",
       mapStage.addChild(decorations)
       game.decorations = decorations
 
-      for(var i=0; i<map.pills.length; i++) {
-        this.newPill(map.pills[i])
-      }
+      map.pills.map(this.newPill)
 
       shadows.setWalls(walls)
 
@@ -196,18 +189,13 @@ define(["resources",
         scoreTable = null
       }
       //clearpills
-      var nodes = playerStage.childNodes
-      for(var i=0; i<nodes.length; i++) {
-        var node = nodes[i]
-        if(node.applyEffect) {
-          node.remove()
-          i--
-        }
-      }
-
-      for(var i in game.players) {
-        var player = game.players[i]
-        for(var type in player.pillEffects) {
+      playerStage.childNodes
+        .filter(node => node.applyEffect)
+        .map(node => node.remove())
+      
+      for(let i in game.players) {
+        let player = game.players[i]
+        for(let type in player.pillEffects) {
           player.clearPillEffect(type)
         }
       }
@@ -223,52 +211,42 @@ define(["resources",
       new ui.Quote()
     }
     game.newPill = function(pill) {
-      var p = pills.create(pill)
+      const p = pills.create(pill)
       playerStage.addChild(p)
       p._updateCoordinate()
     }
     game.consumePill = function(playerId, pillId) {
-      var nodes = playerStage.childNodes
-      for(var i=0, l=nodes.length; i<l; i++) {
-        var node = nodes[i]
-        if(node.id == pillId) {
-          game.players[playerId].consumePill(node)
-          node.remove()
-          break;
-        }
+      const node = playerStage.childNodes.find(node => node.id === pillId)
+      if (node) {
+        game.players[playerId].consumePill(node)
+        node.remove()
       }
     }
     game.delPill = function(pillId) {
-      var nodes = playerStage.childNodes
-      for(var i=0, l=nodes.length; i<l; i++) {
-        var node = nodes[i]
-        if(node.id == pillId) {
-          playerStage.removeChild(node)
-          break;
-        }
-      }
+      const node = playerStage.childNodes.find(node => node.id === pillId)
+      if (node) playerStage.removeChild(node)
     }
 
-    Connection.init();
+    Connection.init()
 
   }
 
   return {
 
     create: function() {
-      var width = window.innerWidth < 800 && enchant.ENV.TOUCH_ENABLED ? 400 : 800,
-          height = window.innerHeight < 600 && enchant.ENV.TOUCH_ENABLED ? 300 : 600,
-          scale = 1
+      const width = window.innerWidth < 800 && enchant.ENV.TOUCH_ENABLED ? 400 : 800,
+            height = window.innerHeight < 600 && enchant.ENV.TOUCH_ENABLED ? 300 : 600,
+            scale = 1
       game = new Game(width, height)
       //game.scale = window.innerWidth < 800 && enchant.ENV.TOUCH_ENABLED  ? 0.2 : 1
       //game.scale = scale
       //game.rootScene.scaleX = game.rootScene.scaleY = scale
-      game.fps = 20;
-      for(var key in res) {
-        game.preload(res[key]);
+      game.fps = 60;
+      for(let key in res) {
+        game.preload(res[key])
       }
       game.onload = onLoad
-      game.start();
+      game.start()
     }
 
   }
