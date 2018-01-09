@@ -48,6 +48,13 @@ body canvas {
   position: relative;
 }
 
+#instructions {
+  position: absolute;
+  top: 1em;
+  color: #fff;
+  font-size: 11px;
+}
+
 #lag {
   bottom: 0;
   font-size: 11px;

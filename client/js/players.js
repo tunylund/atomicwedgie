@@ -11,7 +11,7 @@ define([
         banzaiWalkSpeed = 4 / 3,
         wedgieDistance = 32,
         banzaiDistance = 48,
-        wedgieDirectionThreshold = 75, //255 max
+        wedgieDirectionThreshold = 125, //255 max
         updateThreshold = 3 * 3, //every 30 frames
         hearingDistance = 200,
         to_degrees = 180/Math.PI,

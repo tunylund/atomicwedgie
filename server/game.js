@@ -95,15 +95,11 @@ function consumePill(pillId, player) {
   }
 }
 
-function handleMessage(message, player) {
-  switch(message) {
-    case "getLag":
-      const now = new Date()
-      player.client.json.emit("lagCheck", {
-        lag: now.getTime() + now.getTimezoneOffset()*60000
-      });
-      break;
-  }
+function lagCheck(player) {
+  const now = new Date()
+  player.client.json.emit("lagCheck", {
+    lag: now.getTime() + now.getTimezoneOffset()*60000
+  });
 }
 
 function disconnect(player) {
@@ -150,7 +146,7 @@ exports.game = {
     on('wedgie', (...args) => wedgie(...args, player));
     on('banzai', (...args) => banzai(...args, player));
     on('consumePill', (...args) => consumePill(...args, player))
-    on('message', (...args) => handleMessage(...args, player))
+    client.on('lagCheck', (...args) => lagCheck(...args, player))
     on('disconnect', () => disconnect(player))
   }
 

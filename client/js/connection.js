@@ -91,7 +91,7 @@ define([], function() {
         on('enemyBanzai', id => game.players[id].banzai())
         socket.on('enemyUpdate', status => game.players[status.id].update(status))
         on('enemyDisconnect', id => game.trashPlayer(id))
-        on('lagCheck', serverTime => {
+        socket.on('lagCheck', serverTime => {
           game.hud.lag.innerHTML = new Date().getTime() - lagCheckTime;
         })
       } catch(e) {
@@ -101,7 +101,7 @@ define([], function() {
 
     getLag: function() {
       lagCheckTime = new Date().getTime();
-      socket.send("getLag");
+      socket.emit("lagCheck");
       setTimeout(function() {
         Connection.getLag()
       }, 15000);
