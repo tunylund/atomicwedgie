@@ -6,7 +6,7 @@ const u = require('./utils.js'),
 
 const players = []
 const endGameTimeout = new Timer(endGame, (2 * 60 + 30) * 1000) // 2:30mins
-const newGameTimeout = new Timer(initNewGame, 1000)
+const newGameTimeout = new Timer(initNewGame, 10000)
 let map = null
 
 function initNewGame() {

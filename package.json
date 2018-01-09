@@ -22,6 +22,6 @@
     "node": ">= 0.10.13"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node --experimental-modules server.js"
   }
 }

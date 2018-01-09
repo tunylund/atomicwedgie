@@ -1,6 +1,12 @@
 const u = require('./utils.js'),
-      res = require('./../client/js/resources').resources,
       pills = require('./pills.js')
+
+const res = {
+  largeMarble: 'img/floors/largemarble-huge.png',
+  largeConcrete: 'img/floors/concrete-large.png',
+  largeTile: 'img/floors/tile-large.png',
+  walls: 'img/walls/walls.png'
+}
 
 function sliceString(str, length) {
   let result = []
