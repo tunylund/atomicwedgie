@@ -22,6 +22,10 @@
     "node": ">= 0.10.13"
   },
   "scripts": {
+    "getlogin": "aws ecr get-login --no-include-email --region eu-west-1",
+    "build": "npm install && docker build -t atomic-wedgie .",
+    "tag": "docker tag atomic-wedgie:latest 219044013939.dkr.ecr.eu-west-1.amazonaws.com/atomic-wedgie:latest",
+    "push": "docker push 219044013939.dkr.ecr.eu-west-1.amazonaws.com/atomic-wedgie:latest",
     "start": "node --experimental-modules server.js"
   }
 }

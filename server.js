@@ -3,7 +3,7 @@ const http = require('http'),
       game = require('./server/game.js').game,
       socketIO = require('socket.io'),
       static = require('node-static'),
-      port = process.env.PORT || 1337
+      port = process.env.PORT || 8888
 
 const staticServer = new static.Server('./client/', { cache: 60 * 60 * 24 }) // 24h cache
 
