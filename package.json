@@ -1,7 +1,7 @@
 {
   "name": "atomic-wedgie",
   "description": "Awesome wedgienaut",
-  "homepage": "atomic-wedgie-tunylund.dotcloud.com",
+  "homepage": "https://github.com/tunylund/atomicwedgie",
   "keywords": [
     "game",
     "websocket",

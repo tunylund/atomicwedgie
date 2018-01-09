@@ -2,14 +2,10 @@ const u = require('./utils'),
       texts = require('./texts'),
       Timer = u.Timer
 
-const turnSpeed = 10/3,
-      walkSpeed = 6/3,
+const walkSpeed = 6/3,
       banzaiWalkSpeed = 4/3,
-      wedgieDistance = 32,
-      banzaiDistance = 48,
       banzaidDuration = 3500,
-      wedgiedDuration = 3500,
-      wedgieDirectionThreshold = 75 //255 max
+      wedgiedDuration = 3500
 
 class Player {
 
@@ -21,13 +17,11 @@ class Player {
     this.name = ""
     this.color = ""
     this.reset()
-    this.lagChecks = []
   }
 
   reset () {
     this.clearDeathTimeout.stop()
     this.walkSpeed = walkSpeed
-    this.turnSpeed = turnSpeed
     this.wedgied = this.banzaid = this.banzaiMode = false;
     this.pillEffects = {}
     this.speedMultiplier = 1
@@ -78,16 +72,9 @@ class Player {
       return;
 
     let status = msg;
-    
-    if(status.time) {
-      const now = new Date();
-      const utcTime = now.getTime() + now.getTimezoneOffset()*60000;
-      this.lagChecks.push(utcTime - status.time);
-    }
-    
     status.id = this.id
-    status.performingBanzai = this.canPerformingBanzai() ? status.performingBanzai : false
-    status.performingWedgie = this.canPerformingWedgie() ? status.performingWedgie : false
+    status.performingBanzai = this.canPerformBanzai() ? status.performingBanzai : false
+    status.performingWedgie = this.canPerformWedgie() ? status.performingWedgie : false
     status.v = Math.min(status.v, (status.banzaiMode ? banzaiWalkSpeed : walkSpeed)*this.speedMultiplier)
 
     for(let i in status) {
@@ -107,11 +94,11 @@ class Player {
     };
   }
     
-  canPerformingWedgie () {
+  canPerformWedgie () {
     return !this.banzaiMode && !this.performingWedgie && !this.wedgied && !this.banzaid
   }
   
-  canPerformingBanzai () {
+  canPerformBanzai () {
     return this.banzaiMode && !this.performingBanzai && !this.wedgied && !this.banzaid
   }
 
@@ -139,7 +126,7 @@ class Player {
     this.client.emit("wedgie", enemy.id);
     this.client.broadcast.emit("enemyWedgie", this.id);
     this.clearDeathTimeout.start(wedgiedDuration)
-    this.client.broadcast.emit("text", texts.wedgie(this, enemy));
+    this.client.broadcast.emit("text", texts.wedgie(this.name, enemy.name));
   }
 
   banzai (enemy) {
@@ -151,7 +138,7 @@ class Player {
     this.client.emit("banzai", enemy.id);
     this.client.broadcast.emit("enemyBanzai", this.id);
     this.clearDeathTimeout.start(banzaidDuration)
-    this.client.broadcast.emit("text", texts.banzai(this, enemy));
+    this.client.broadcast.emit("text", texts.banzai(this.name, enemy.name));
   }
 
   clearDeath () {

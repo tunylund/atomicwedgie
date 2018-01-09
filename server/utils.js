@@ -6,7 +6,7 @@ function id(prefix = '') {
 function randomBetween(a = 0, b = 10) {
   return Math.floor((Math.random()*b)+a);
 }
-[].some
+
 function randomFrom(arr) {
   return arr[randomBetween(0, arr.length)]
 }

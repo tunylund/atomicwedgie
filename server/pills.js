@@ -81,7 +81,7 @@ class Yellow extends Pill {
   }
 }
 
-exports.getRandomPill = function(position) {
+module.exports.getRandomPill = function(position) {
   const Type = u.randomFrom([Red, Green, Blue, Yellow])
   return new Type(position.x, position.y)
 }

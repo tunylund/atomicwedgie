@@ -5,9 +5,9 @@ const u = require('./utils.js'),
       Timer = u.Timer
 
 const players = []
+const endGameTimeout = new Timer(endGame, (2 * 60 + 30) * 1000) // 2:30mins
+const newGameTimeout = new Timer(initNewGame, 1000)
 let map = null
-let endGameTimeout = new Timer(endGame, (2 * 60 + 30) * 1000) // 2:30mins
-let newGameTimeout = new Timer(initNewGame, 1000)
 
 function initNewGame() {
   map = maps.random(players)

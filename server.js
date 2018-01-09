@@ -3,55 +3,43 @@ const http = require('http'),
       game = require('./server/game.js').game,
       socketIO = require('socket.io'),
       static = require('node-static'),
-      port = process.env.PORT || 1337;
+      port = process.env.PORT || 1337
 
-const staticServer = new static.Server('./client/', {
-  cache: 'no-cache'
-});
+const staticServer = new static.Server('./client/', { cache: 60 * 60 * 24 }) // 24h cache
 
 const httpServer = http.createServer((req, res) => {
 
   const url = urlParser.parse(req.url),
         parts = url.pathname.split("/"),
-        part = parts.find(x => x !== '') || 'index.html';
+        part = parts.find(x => x !== '') || 'index.html'
 
   switch(part) {
   
     case "status":
-      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Cache-Control', 'no-cache')
       res.writeHead(200, {
         'Content-type': 'application/json'
-      });
-      res.end(JSON.stringify(game.status()));
-      break;
+      })
+      res.end(JSON.stringify(game.status()))
+      break
 
-    case "favicon.ico":
-    case "js":
-    case "lib":
-    case "css":
-    case "img":
-    case "sounds":
-    case "game.html":
-    case "index.html":
-      req.addListener('end', function () {
-        staticServer.serve(req, res);
-      }).resume();
-      break;
-      
     default:
-      res.writeHead(404, {'Content-Type': 'text/plain'});
-      res.end('Path not found.\n');
-      console.error("path not found: " + req.url);
-      break;
+      req.addListener('end', function () {
+        staticServer.serve(req, res, err => {
+          if (err && (err.status === 404)) {
+            res.writeHead(404, {'Content-Type': 'text/plain'})
+            res.end('Path not found.\n')
+          }
+        })
+      }).resume()
+      break
   
   }
 
-});
-
-const io = socketIO(httpServer, {
-  transports: ['websocket']
 })
-io.on('connection', game.connect.bind(game));
 
-httpServer.listen(port);
-console.log('Server running at http://127.0.0.1:' + port + '/');
+const io = socketIO(httpServer, { transports: ['websocket'] })
+io.on('connection', game.connect.bind(game))
+
+httpServer.listen(port)
+console.log(`Server running at http://127.0.0.1:${port}/`)
