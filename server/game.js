@@ -7,7 +7,7 @@ const u = require('./utils.js'),
 const players = []
 let map = null
 let endGameTimeout = new Timer(endGame, (2 * 60 + 30) * 1000) // 2:30mins
-let newGameTimeout = new Timer(initNewGame, 15000)
+let newGameTimeout = new Timer(initNewGame, 1000)
 
 function initNewGame() {
   map = maps.random(players)
@@ -26,7 +26,10 @@ function emitNewGame(player) {
   player.client.json.emit("newGame", {
     gameTime: endGameTimeout.timeLeft,
     map: map.toJson(),
-    player: player.toJson()
+    player: player.toJson(),
+    enemies: players
+      .filter(p => p.id != player.id)
+      .map(p => p.toJson())
   })
   player.client.json.broadcast.emit("enemyUpdate", player.toJson())
 }
@@ -49,10 +52,7 @@ function handleJoinRequest(request, player) {
   console.log("joinrequest from " + player.name);
   
   player.client.json.emit('join', {
-    player: player.toJson(),
-    enemies: players
-      .filter(p => p.id != player.id)
-      .map(p => p.toJson())
+    player: player.toJson()
   });
   player.client.broadcast.json.emit("enemyJoin", player.toJson());
 

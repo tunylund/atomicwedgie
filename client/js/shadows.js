@@ -281,9 +281,7 @@ define([], function() {
       this.h2 = this.height/2
       this.reset()
       this.on('enterframe', this.onEnterFrame)
-      game = enchant.Game.instance
-
-      game._element.appendChild(this._element)
+      // game = enchant.Game.instance
     }
 
     setWalls (wallsMap) {
@@ -301,14 +299,20 @@ define([], function() {
       this.clearAll()
     }
 
+    removeLight (light) {
+      lights.splice(lights.indexOf(light), 1)
+      this.clearAll()
+    }
+
     reset () {
       map = null
       wallPolygons = []
       this.clearAll()
+      enchant.Game.instance._element.appendChild(this._element)
     }
 
     onEnterFrame (ctx) {
-      if(lights.length > 0) {
+      if(lights.length > 0 && enchant.Game.instance.player) {
         //this.clearAll()
         this.move()
         //this.clearLight()
@@ -320,13 +324,14 @@ define([], function() {
     }
 
     move () {
+      const player = enchant.Game.instance.player
       lightAndShadowOffset = {
-        x: -Math.floor(game.player.x + game.player.w2 - lightSurface.w2),
-        y: -Math.floor(game.player.y + game.player.h2 - lightSurface.h2)
+        x: -Math.floor(player.x + player.w2 - lightSurface.w2),
+        y: -Math.floor(player.y + player.h2 - lightSurface.h2)
       }
       lightSurfaceOffset = {
-        x: Math.floor(game.player.x + game.player.w2 - lightSurface.w2 + this.x),
-        y: Math.floor(game.player.y + game.player.h2 - lightSurface.h2 + this.y)
+        x: Math.floor(player.x + player.w2 - lightSurface.w2 + this.x),
+        y: Math.floor(player.y + player.h2 - lightSurface.h2 + this.y)
       }
     }
 
@@ -455,6 +460,10 @@ define([], function() {
         return data > 10 ? data*4/1000 : 0
       }
       return 0
+    }
+
+    remove() {
+      
     }
 
   }

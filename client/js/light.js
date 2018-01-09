@@ -27,6 +27,11 @@ define(["resources"], function(res) {
       this.rotation = this.player.rotation
     }
 
+    remove () {
+      enchant.Game.instance.shadows.removeLight(this)
+      enchant.Sprite.prototype.remove.call(this)
+    }
+
   }
 
   return Light

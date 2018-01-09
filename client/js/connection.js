@@ -54,7 +54,7 @@ define([], function() {
 
         on('connect', onConnect)
         on('connect_failed', onConnectFailed)
-        on('join', response => game.addEnemies(response.enemies))
+        on('join', () => {})
         on('message', () => {})
         on('disconnect', () => window.location = "index.html")
         on('error', err => console.error(err))
@@ -84,7 +84,7 @@ define([], function() {
           const player = game.players[result.playerId]
           if(player) player.clearPillEffect(result.type)
         })
-        on('newGame', response => game.newGame(response.map, response.gameTime, response.player))
+        on('newGame', response => game.newGame(response.map, response.gameTime, response.player, response.enemies))
         on('endGame', result => game.endGame(result))
         on('enemyJoin', enemy => game.addEnemy(enemy))
         on('enemyWedgie', id => game.players[id].wedgie())

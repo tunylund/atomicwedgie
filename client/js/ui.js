@@ -3,13 +3,12 @@ define(['texts'], function(texts) {
   class ActiveTextList {
 
     constructor () {
-      const stage = document.getElementById("enchant-stage")
       this.div = document.createElement("div")
       this.div.className = "activeTextList"
-      stage.appendChild(this.div)
       this.max = 12
       this.texts = []
       this.div.addEventListener(enchant.ENV.VENDOR_PREFIX + "TransitionEnd", e => this.removeOldestText())
+      this.replaceOnDom()
     }
 
     removeOldestText () {
@@ -30,13 +29,17 @@ define(['texts'], function(texts) {
       }, 10)
     }
 
+    replaceOnDom () {
+      const stage = document.getElementById("enchant-stage")
+      stage.appendChild(this.div)
+    }
+
   }
 
   class ScoreLabel extends enchant.EventTarget {
 
     constructor (labelText, x, y, score, icon, className) {
       super()
-      const stage = document.getElementById("enchant-stage")
       this.div = document.createElement("div")
       this.div.className = "scoreLabel " + (className || "")
       this.div.style.left = x + "px"
@@ -51,7 +54,7 @@ define(['texts'], function(texts) {
       this.scoreEl = document.createElement("span")
       this.score = score || 0
       this.div.appendChild(this.scoreEl)
-      stage.appendChild(this.div)
+      this.replaceOnDom()
     }
 
     get score() {
@@ -72,6 +75,10 @@ define(['texts'], function(texts) {
       this._label.innerHTML = text
     }
 
+    replaceOnDom () {
+      const stage = document.getElementById("enchant-stage")
+      stage.appendChild(this.div)
+    }
   }
 
   class TimeLabel extends ScoreLabel {

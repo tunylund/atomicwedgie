@@ -47,6 +47,39 @@ define(["resources", "decorations"], function(res, decorations) {
     }
   }
 
+  class Map extends enchant.Map {
+    constructor(mapData) {
+      super(mapData.tileSize, mapData.tileSize)
+      this.image = enchant.Game.instance.assets[mapData.tileImage]
+      this.loadData(mapData.tileData)
+      this.collisionData = buildCollisionData(this, mapData.emptyTile)
+    }
+
+    reset () {
+      this._context.clearRect(0, 0, this._context.canvas.width, this._context.canvas.height)
+    }
+
+    collides (x, y, w2, h2) {
+      return this.hitTest(x, y) //top left
+              || this.hitTest(x + w2, y) //top center
+              || this.hitTest(x + w2*2, y) //top right
+              || this.hitTest(x + w2*2, y + h2) //right center
+              || this.hitTest(x + w2*2, y + h2*2) //right btm
+              || this.hitTest(x + w2, y + h2*2) //btm center
+              || this.hitTest(x, y + h2*2) //btm left
+              || this.hitTest(x, y + h2) //left center
+              || this.hitTest(x + w2, y + h2) //center
+    }
+
+    isWithin (x, y, w, h) {
+      return 0 <= x && 
+              x + w < this.width && 
+              0 <= y && 
+              y + h < this.height
+    }
+
+  }
+
   return {
     
     floor: function(mapData, width, height) {
@@ -54,29 +87,7 @@ define(["resources", "decorations"], function(res, decorations) {
     },
 
     walls: function(mapData) {
-      const game = enchant.Game.instance
-      const map = new enchant.Map(mapData.tileSize, mapData.tileSize)
-      map.image = game.assets[mapData.tileImage]
-      map.loadData(mapData.tileData)
-      map.collisionData = buildCollisionData(map, mapData.emptyTile)
-      map.isWithin = function(x, y, w, h) {
-        return 0 <= x && 
-                x + w < map.width && 
-                0 <= y && 
-                y + h < map.height
-      }
-      map.collides = function(x, y, w2, h2) {
-        return this.hitTest(x, y) //top left
-                || this.hitTest(x + w2, y) //top center
-                || this.hitTest(x + w2*2, y) //top right
-                || this.hitTest(x + w2*2, y + h2) //right center
-                || this.hitTest(x + w2*2, y + h2*2) //right btm
-                || this.hitTest(x + w2, y + h2*2) //btm center
-                || this.hitTest(x, y + h2*2) //btm left
-                || this.hitTest(x, y + h2) //left center
-                || this.hitTest(x + w2, y + h2) //center
-      }
-      return map
+      return new Map(mapData)
     },
 
     decorations: function(mapData) {

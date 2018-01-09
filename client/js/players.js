@@ -85,6 +85,7 @@ define([
     reset () {
       this.walkSpeed = walkSpeed
       this.turnSpeed = turnSpeed
+      enchant.Game.instance.shadows.clearAll()
     }
 
     onEnterFrame () {
@@ -145,6 +146,8 @@ define([
       let map = game.map,
           rot = normalizeAngle(this.rotation),
           decorations = game.decorations.childNodes
+
+      if (!map) return
 
       if(this.speedMultiplier) {
         this.v *= this.speedMultiplier
@@ -316,12 +319,6 @@ define([
       if (this.performingBanzai && this._frameSequence === null) {
         this.performingBanzai = false
       }
-      // if (this.wedgied && this._frameSequence === null) {
-      //   this.wedgied = false
-      // }
-      // if (this.banzaid && this._frameSequence === null) {
-      //   this.banzaid = false
-      // }
       if(this.performingBanzai && this.frame == 1) {
         this.performBanzaiHit()
       }
@@ -515,7 +512,7 @@ define([
         this.light.remove()
         this.light = null
       }
-      enchant.Sprite.remove.call(this)
+      enchant.Sprite.prototype.remove.call(this)
     }
 
   }

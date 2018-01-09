@@ -11,8 +11,6 @@ define(["resources",
     constructor(width, height) {
       super(width, height)
       this.fps = 60;
-      this.rootScene.addChild(new Group());
-      this.rootScene.addChild(new Group())  
       this._players = {}
       this._shadows = new Shadows(this.width, this.height)
       
@@ -21,8 +19,8 @@ define(["resources",
       this.addEventListener(enchant.Event.ENTER_FRAME, this._refreshShadows)
       this.keybind(65, 'a')
       this.keybind(83, 'b')
-      this.addEventListener("abuttonup", e => this.input.aUp = true)
-      this.addEventListener("bbuttonup", e => this.input.bUp = true)
+      this.addEventListener(enchant.Event.A_BUTTON_UP, e => this.input.aUp = true)
+      this.addEventListener(enchant.Event.B_BUTTON_UP, e => this.input.bUp = true)
       this.addEventListener(enchant.Event.LEFT_BUTTON_DOWN, e => this.input.leftUp = true)
       this.addEventListener(enchant.Event.RIGHT_BUTTON_DOWN, e => this.input.rightUp = true)
       this.addEventListener(enchant.Event.UP_BUTTON_DOWN, e => this.input.upUp = true)
@@ -41,8 +39,8 @@ define(["resources",
     get player () { return this._player }
     get players () { return this._players }
     get shadows () { return this._shadows }
-    get mapStage () { return this.rootScene.childNodes[0] }
-    get playerStage () { return this.rootScene.childNodes[1] }
+    get mapStage () { return this.currentScene.childNodes[0] }
+    get playerStage () { return this.currentScene.childNodes[1] }
     get hud () { return this._hud }
     get decorations () { return this._decorations }
     get map () { return this._map }
@@ -83,7 +81,7 @@ define(["resources",
     }
 
     _refreshShadows () {
-      if(this.shadows) {
+      if(this.shadows && this.player) {
         this.shadows.onEnterFrame()
       }
     }
@@ -97,24 +95,38 @@ define(["resources",
       Connection.init()
     }
 
-    newGame (map, gameTime, player) {
+    newGame (map, gameTime, player, enemies) {
+      const scene = new enchant.CanvasScene()
+      scene.addChild(new Group())
+      scene.addChild(new Group())
+      this.pushScene(scene)
+
       this.shadows.reset()
+
+      for (let i in this.hud) {
+        this.hud[i].replaceOnDom && this.hud[i].replaceOnDom()
+      }
+
       this.map = map
       this.hud.time.time = gameTime / 1000
       this.hud.wedgieScoreLabel.score = 0
       this.hud.banzaiScoreLabel.score = 0
       this.addPlayer(player)
+      this.addEnemies(enemies)
       this.removeScoreTable()
     }
     
     endGame (result) {
+      const scene = this.popScene()
+      scene._layers.Canvas.remove()
+
       this.hud.time.time = 0
       this.shadows.reset()
-      this.mapStage.childNodes.map(node => node.remove())
+      this.map.reset()
+
       this._map = null
+      this._player = null
       this.removeScoreTable()
-      //clearpills
-      this.pills.map(node => node.remove())
       
       for(let i in this.players) {
         let player = this.players[i]
