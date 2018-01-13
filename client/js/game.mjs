@@ -210,10 +210,11 @@ class AtomicWedgie extends enchant.Game {
 export default function createGame () {
   const width = window.innerWidth < 800 && enchant.ENV.TOUCH_ENABLED ? 400 : 800,
         height = window.innerHeight < 600 && enchant.ENV.TOUCH_ENABLED ? 300 : 600,
-        scale = 1
+        scale = window.innerWidth < 800 && enchant.ENV.TOUCH_ENABLED ? window.innerWidth / width : 1
   const game = new AtomicWedgie(width, height)
   for(let key in resources) {
     game.preload(resources[key])
   }
+  document.querySelector('#enchant-stage').style.transform = `scale(${scale})`
   game.start()
 }

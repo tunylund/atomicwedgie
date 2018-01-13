@@ -83,8 +83,8 @@ class ScoreLabel extends enchant.EventTarget {
 
 class TimeLabel extends ScoreLabel {
 
-  constructor (time) {
-    super("", 15, 15);
+  constructor (time, x = 15, y = 15) {
+    super("", x, y);
     this.div.className += " timeLabel"
     this._time = 0;
     this._count = -1;
@@ -138,7 +138,7 @@ class ScoreTable {
     const stage = document.getElementById("enchant-stage")
     this.div = document.createElement("div")
     this.div.className = "scoreTable"
-    this.nextGameIn = new TimeLabel(result.nextGameIn / 1000)
+    this.nextGameIn = new TimeLabel(result.nextGameIn / 1000, 0, 15)
     this.nextGameIn.label = "Next game in: "
     this.div.appendChild(this.nextGameIn.div)
 
@@ -164,7 +164,6 @@ class ScoreTable {
         s = new ScoreLabel("", 0, 0, scores.score, "score", "score"),
         name = document.createElement("div")
     
-
     name.innerHTML = player.name
     name.className = "name"
     row.className = player.color
@@ -198,8 +197,8 @@ class TouchPad {
     this.input = { left: false, right: false, up: false, down: false };
 
     this.div.addEventListener('touchstart', e => this.touchStart(e))
-    this.div.addEventListener('touchmove', e => entity.touchMove(e))
-    this.div.addEventListener('touchend', e => entity.touchEnd(e))
+    this.div.addEventListener('touchmove', e => this.touchMove(e))
+    this.div.addEventListener('touchend', e => this.touchEnd(e))
   }
 
   touchStart (e) {
@@ -230,10 +229,11 @@ class TouchPad {
   }
   _detectInput (e) {
     let core = this.core,
-        x = (e.pageX - this.x) - this.w2,
-        y = (e.pageY - this.y) - this.h2,
+        touch = e.touches[e.touches.length - 1],
+        x = (touch.pageX - this.x) - this.w2,
+        y = (touch.pageY - this.y) - this.h2,
         input = { left: false, right: false, up: false, down: false };
-    if (x * x + y * y > 200) {
+    if (x * x + y * y > this.w2) {
       if (x < 0 && y < x * x * 0.1 && y > x * x * -0.1) {
         input.left = true;
       }
@@ -253,10 +253,10 @@ class TouchPad {
     let core = this.core;
     ['left', 'right', 'up', 'down'].map(type => {
       if (this.input[type] && !input[type]) {
-        core.dispatchEvent(new enchant.Event(type + 'buttonup'));
+        core.changeButtonState(type, false);
       }
       if (!this.input[type] && input[type]) {
-        core.dispatchEvent(new enchant.Event(type + 'buttondown'));
+        core.changeButtonState(type, true);
       }
     })
     this.input = input
@@ -375,7 +375,7 @@ const ui = {
 
   makeTouchControls: () => {
     return {
-      pad: new TouchArrows(),
+      pad: new TouchPad(),
       a: new TouchButton("A", "a"),
       b: new TouchButton("B", "b")
     }
