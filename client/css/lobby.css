@@ -79,7 +79,8 @@ label {
   top: -3px;
 }
 .taken-info {
-  color: #ccc;
+  display: none;
+  color: #fff;
   font-size: 0.725em;
   font-style: italic;
 }
@@ -93,7 +94,8 @@ input[type=radio] {
   width: 0;
   height: 0;
 }
-input[type=radio] + i {
+input[type=radio] + i,
+input[type=radio]:disabled:hover + i {
   border: solid 1px transparent;
 }
 input[type=radio]:hover + i {
@@ -102,6 +104,9 @@ input[type=radio]:hover + i {
 input:checked + i {
   background-color: #fff;
   background-position: center;
+}
+input:disabled + i {
+  opacity: 0.3;
 }
 
 input[type=text] {

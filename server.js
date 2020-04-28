@@ -5,7 +5,7 @@ const http = require('http'),
       static = require('node-static'),
       port = process.env.PORT || 8888
 
-const staticServer = new static.Server('./client/', { cache: 60 * 60 * 24 }) // 24h cache
+const staticServer = new static.Server('./client/', { cache: 60 * 5 }) // 5 min cache
 
 const httpServer = http.createServer((req, res) => {
 
