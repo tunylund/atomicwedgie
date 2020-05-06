@@ -1,5 +1,6 @@
 const u = require('./utils'),
       texts = require('./texts'),
+      {send, broadcastToOthers} = require('gamestate')
       Timer = u.Timer
 
 const walkSpeed = 6/3,
@@ -9,11 +10,10 @@ const walkSpeed = 6/3,
 
 class Player {
 
-  constructor (client, getSpawnPoint) {
+  constructor (id, getSpawnPoint) {
     this.clearDeathTimeout = new Timer(() => this.clearDeath(), wedgiedDuration)
     this.getSpawnPoint = getSpawnPoint
-    this.client = client
-    this.id = "player-" + u.id()
+    this.id = id
     this.name = ""
     this.color = ""
     this.reset()
@@ -81,7 +81,7 @@ class Player {
       this[i] = status[i]
     }
     
-    this.client.broadcast.emit("enemyUpdate", status);
+    broadcastToOthers(this.id, 'enemyUpdate', status)
   }
 
   getAbsCollision (col) {
@@ -105,13 +105,13 @@ class Player {
   claimWedgie () {
     this.wedgieCount++
     this.score += 5
-    this.client.json.emit("score", this.scores())
+    send(this.id, 'score', this.scores())
   }
 
   claimBanzai () {
     this.banzaiCount++
     this.score += 2
-    this.client.json.emit("score", {
+    send(this.id, 'score', {
       wedgieCount: this.wedgieCount,
       banzaiCount: this.banzaiCount
     })
@@ -123,10 +123,10 @@ class Player {
     this.deathCount++
     this.performingBanzai = false
     this.performingWedgie = false
-    this.client.emit("wedgie", enemy.id);
-    this.client.broadcast.emit("enemyWedgie", this.id);
+    send(this.id, 'wedgie', enemy.id)
+    broadcastToOthers(this.id, 'enemyWedgie', this.id)
     this.clearDeathTimeout.start(wedgiedDuration)
-    this.client.broadcast.emit("text", texts.wedgie(this.name, enemy.name));
+    broadcastToOthers(this.id, 'text', texts.wedgie(this.name, enemy.name))
   }
 
   banzai (enemy) {
@@ -135,10 +135,10 @@ class Player {
     this.banzaiMode = false
     this.performingBanzai = false
     this.performingWedgie = false
-    this.client.emit("banzai", enemy.id);
-    this.client.broadcast.emit("enemyBanzai", this.id);
+    send(this.id, 'banzai', enemy.id)
+    broadcastToOthers(this.id, 'enemyBanzai', this.id)
     this.clearDeathTimeout.start(banzaidDuration)
-    this.client.broadcast.emit("text", texts.banzai(this.name, enemy.name));
+    broadcastToOthers(this.id, 'text', texts.banzai(this.name, enemy.name))
   }
 
   clearDeath () {
@@ -150,8 +150,8 @@ class Player {
     this.wedgied = false
     this.banzaid = false
     const msg = { id: this.id, x: this.x, y: this.y }
-    this.client.json.emit("clearDeath", msg);
-    this.client.broadcast.emit("clearDeath", msg);
+    send(this.id, 'clearDeath', msg)
+    broadcastToOthers(this.id, 'clearDeath', msg)
   }
 
   consumePill (pill) {
@@ -160,14 +160,14 @@ class Player {
     }
     this.pillEffects[pill.type] = pill
     const msg = { playerId: this.id, pillId: pill.id }
-    this.client.emit("consumePill", msg)
-    this.client.broadcast.json.emit("consumePill", msg)
+    send(this.id, 'consumePill', msg)
+    broadcastToOthers(this.id, 'consumePill', msg)
   }
 
   clearPill (type) {
     const msg = { playerId: this.id, type }
-    this.client.emit("clearPillEffect", msg)
-    this.client.broadcast.json.emit("clearPillEffect", msg)
+    send(this.id, 'clearPillEffect', msg)
+    broadcastToOthers(this.id, 'clearPillEffect', msg)
   }
 
   remove () {

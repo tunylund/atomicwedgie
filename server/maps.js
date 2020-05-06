@@ -1,5 +1,6 @@
 const u = require('./utils.js'),
-      pills = require('./pills.js')
+      pills = require('./pills.js'),
+      {send} = require('gamestate')
 
 const res = {
   largeMarble: 'img/floors/largemarble-huge.png',
@@ -94,7 +95,7 @@ class Map {
 
   sendNewPill (pill) {
     for(let player of this.players) {
-      player.client.json.emit("newPill", pill);
+      send(player.id, 'newPill', pill)
     }
   }
 

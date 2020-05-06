@@ -1,27 +1,29 @@
+import { connect, on, send } from './transport.mjs'
+
 let game
 let msg
 let waitMsgTimeout
 let lagCheckTime
 let noConnection
-let socket
 
-function onConnect(response) {
+function onConnect() {
   clearTimeout(waitMsgTimeout);
   if(msg) document.body.removeChild(msg)
   if(noConnection) {
-    Connection.join();
-    noConnection = false;
-    Connection.getLag();
+    Connection.join()
+    noConnection = false
+    Connection.getLag()
   }
 }
 
-function onConnectFailed(response) {
+function onConnectFailed() {
   clearTimeout(waitMsgTimeout);
+  if (!msg) showWaitMsg()
   msg.innerHTML = "".concat("<div class='msg'>",
-    "Oh that's too bad.. It seems that your browser or ",
-    "network does not support web sockets properly. ",
-    "Are you using some old evil browser or are ou behind ",
-    "an evil evil proxy? </div>"); 
+  "Oh that's too bad.. It seems that your browser or ",
+  "network does not support web sockets properly. ",
+  "Are you using some old evil browser or are ou behind ",
+  "an evil evil proxy? </div>")
 }
 
 function showWaitMsg() {
@@ -29,13 +31,6 @@ function showWaitMsg() {
   msg.className = 'msg'
   msg.innerHTML = "Wait for it..."
   document.body.prepend(msg)
-}
-
-function on (ev, fn) {
-  socket.on(ev, response => {
-    console.log(`${ev} received`, response)
-    fn(response)
-  })
 }
 
 const Connection = {
@@ -46,16 +41,14 @@ const Connection = {
     waitMsgTimeout = setTimeout(showWaitMsg, 3000);
     
     try {
-      socket = io.connect({
-        transports: ['websocket']
-      });
-
-      on('connect', onConnect)
-      on('connect_failed', onConnectFailed)
+      connect()
+      
+      on('open', onConnect)
+      on('socket-error', onConnectFailed)
       on('join', () => {})
       on('message', () => {})
-      on('disconnect', () => window.location = "index.html")
-      on('error', err => console.error(err))
+      on('close', () => window.location = "index.html")
+      on('socket-error', err => console.error(err))
 
       on('wedgie', enemyId => {
         game.player.wedgie()
@@ -87,9 +80,9 @@ const Connection = {
       on('enemyJoin', enemy => game.addEnemy(enemy))
       on('enemyWedgie', id => game.players[id].wedgie())
       on('enemyBanzai', id => game.players[id].banzai())
-      socket.on('enemyUpdate', status => game.players[status.id].update(status))
+      on('enemyUpdate', status => game.players[status.id].update(status))
       on('enemyDisconnect', id => game.trashPlayer(id))
-      socket.on('lagCheck', serverTime => {
+      on('lagCheck', serverTime => {
         game.hud.lag.innerHTML = new Date().getTime() - lagCheckTime;
       })
     } catch(e) {
@@ -99,17 +92,17 @@ const Connection = {
 
   getLag: function() {
     lagCheckTime = new Date().getTime();
-    socket.emit("lagCheck");
+    send("lagCheck");
     setTimeout(function() {
       Connection.getLag()
     }, 15000);
   },
   
-  send: message => socket.send(message),
-  wedgie: victimId => socket.emit("wedgie", victimId),
-  banzai: victimId => socket.emit("banzai", victimId),
-  consumePill: pill => socket.emit("consumePill", pill.id),
-  update: status => socket.emit("update", status),
+  send: message => send.send(message),
+  wedgie: victimId => send("wedgie", victimId),
+  banzai: victimId => send("banzai", victimId),
+  consumePill: pill => send("consumePill", pill.id),
+  update: status => send("update", status),
   join: () => {
     let character = {}
     try {
@@ -117,7 +110,7 @@ const Connection = {
     } catch(e){
       console.warn("no character selected, using defaults");
     };
-    socket.emit("joinRequest", character);
+    send("joinRequest", character);
   }
 }
 

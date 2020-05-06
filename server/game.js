@@ -1,7 +1,7 @@
 const u = require('./utils.js'),
       Player = require('./player.js'),
       maps = require('./maps.js'),
-      texts = require('./texts.js'),
+      {send, broadcastToOthers, on} = require('gamestate'),
       Timer = u.Timer
 
 const players = []
@@ -23,7 +23,7 @@ function endGame() {
 
 function emitNewGame(player) {
   player.reset()
-  player.client.json.emit("newGame", {
+  send(player.channel, 'newGame', {
     gameTime: endGameTimeout.timeLeft,
     map: map.toJson(),
     player: player.toJson(),
@@ -31,14 +31,14 @@ function emitNewGame(player) {
       .filter(p => p.id != player.id)
       .map(p => p.toJson())
   })
-  player.client.json.broadcast.emit("enemyUpdate", player.toJson())
+  broadcastToOthers(player.channel, "enemyUpdate", player.toJson())
 }
 
 function emitEndGame(player) {
   const scores = players
     .map(player => ({ [player.id] : player.scores()}))
     .reduce(Object.assign, {})
-  player.client.json.emit("endGame", {
+  send(player.channel, 'endGame', {
     scores,
     nextGameIn: newGameTimeout.timeLeft
   })
@@ -50,11 +50,13 @@ function handleJoinRequest(request, player) {
   player.name = request.name
   player.color = request.color
   console.log("joinrequest from " + player.name);
-  
-  player.client.json.emit('join', {
+
+
+
+  send(player.channel, 'join', {
     player: player.toJson()
-  });
-  player.client.broadcast.json.emit("enemyJoin", player.toJson());
+  })
+  broadcastToOthers(player.channel, 'enemyJoin', player.toJson())
 
   emitNewGame(player)
   if(newGameTimeout.isTicking) {
@@ -90,21 +92,21 @@ function consumePill(pillId, player) {
   if (pill) {
     pill.applyEffect(player)
     for(let player of players) {
-      player.client.emit("delPill", pillId);
+      send(player.channel, 'delPill', pillId)
     }
   }
 }
 
 function lagCheck(player) {
   const now = new Date()
-  player.client.json.emit("lagCheck", {
+  send(player.channel, 'lagCheck', {
     lag: now.getTime() + now.getTimezoneOffset()*60000
-  });
+  })
 }
 
 function disconnect(player) {
   console.log("disconnect from " + player.name);
-  player.client.broadcast.emit("enemyDisconnect", player.id);
+  broadcastToOthers(player.channel, 'enemyDisconnect', player.id)
   
   player.remove()
   players.splice(players.findIndex(p => p.id === player.id), 1)
@@ -117,37 +119,32 @@ function disconnect(player) {
   }
 }
 
-exports.game = {
-
-  status: function() {
-    return {
-      players: players.map(p => p.toJson()),
-      startTime: endGameTimeout.startTime
-    }
-  },
-  
-  connect: function(client) {
-  
-    if(players.length == 0) {
-      initNewGame();
-    }
-
-    const on = (ev, fn) => {
-      client.on(ev, (...args) => {
-        console.log(`${ev} received`, ...args)
-        fn(...args)
-      })
-    }
-  
-    let player = new Player(client, () => map.getSpawnPoint())
-    players.push(player);
-    on('joinRequest', (...args) => handleJoinRequest(...args, player))
-    client.on('update', (...args) => player.update(...args));
-    on('wedgie', (...args) => wedgie(...args, player));
-    on('banzai', (...args) => banzai(...args, player));
-    on('consumePill', (...args) => consumePill(...args, player))
-    client.on('lagCheck', (...args) => lagCheck(...args, player))
-    on('disconnect', () => disconnect(player))
+exports.connectToGame = function(id) {
+  if(players.length == 0) {
+    initNewGame();
   }
 
-};
+  const _on = (ev, fn) => {
+    on(id, ev, (...args) => {
+      console.log(`${ev} received`, ...args)
+      fn(...args)
+    })
+  }
+
+  const player = new Player(id, () => map.getSpawnPoint())
+  players.push(player);
+  _on('joinRequest', (...args) => handleJoinRequest(...args, player))
+  on(id, 'update', (...args) => player.update(...args));
+  _on('wedgie', (...args) => wedgie(...args, player));
+  _on('banzai', (...args) => banzai(...args, player));
+  _on('consumePill', (...args) => consumePill(...args, player))
+  on(id, 'lagCheck', (...args) => lagCheck(...args, player))
+  _on('close', () => disconnect(player))
+}
+
+exports.status = function() {
+  return {
+    players: players.map(p => p.toJson()),
+    startTime: endGameTimeout.startTime
+  }
+}

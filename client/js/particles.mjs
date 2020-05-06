@@ -19,7 +19,6 @@ class ParticleEmitter extends enchant.Entity {
   }
   onEnterFrame () { }
   cvsRender (context) { }
-
 }
 
 class Trail extends ParticleEmitter {

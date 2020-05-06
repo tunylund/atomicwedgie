@@ -1,11 +1,11 @@
 const http = require('http'),
       urlParser = require('url'),
-      game = require('./server/game.js').game,
-      socketIO = require('socket.io'),
-      static = require('node-static'),
-      port = process.env.PORT || 8888
+      {connectToGame, status} = require('./server/game.js'),
+      {start} = require('gamestate'),
+      nodeStatic = require('node-static')
 
-const staticServer = new static.Server('./client/', { cache: 60 * 5 }) // 5 min cache
+const port = process.env.PORT || 8888
+const staticServer = new nodeStatic.Server('./client/', { cache: 0 }) // no cache
 
 const httpServer = http.createServer((req, res) => {
 
@@ -20,7 +20,7 @@ const httpServer = http.createServer((req, res) => {
       res.writeHead(200, {
         'Content-type': 'application/json'
       })
-      res.end(JSON.stringify(game.status()))
+      res.end(JSON.stringify(status()))
       break
 
     default:
@@ -33,13 +33,12 @@ const httpServer = http.createServer((req, res) => {
         })
       }).resume()
       break
-  
+
   }
 
 })
 
-const io = socketIO(httpServer, { transports: ['websocket'] })
-io.on('connection', game.connect.bind(game))
+start(httpServer, connectToGame)
 
 httpServer.listen(port)
 console.log(`Server running at http://127.0.0.1:${port}/`)
