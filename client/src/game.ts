@@ -2,8 +2,8 @@ import { loop, draw, xyz, zero, entity, position, negone, mul, vector, add } fro
 import { preload } from './assets'
 import { drawHud, Score } from './ui'
 import { drawMap, Map } from './maps'
-import { drawPlayers, Player } from './players'
-import { drawShadows, buildShadowCaster } from './shadows'
+import { drawPlayers, Player, Modes, animatePlayers } from './players'
+import { drawShadows, buildShadowCaster, ShadowCaster } from './shadows'
 import { drawPills, Pill } from './pills'
 import { Effect, buildRingEffect, drawEffects, buildPulseEffect, buildTrailEffect } from './effects'
 
@@ -20,14 +20,12 @@ const gameState: GameState = {
   timeUntilEndGame: 15,
   players: [{
     id: 'some-id',
-    visible: true,
     color: 'green',
-    pos: position(14 * 16, 33 * 16),
+    pos: position(14 * 16, 33 * 16, 0, 1, 1, 0),
     dim: xyz(32, 32, 32),
-    dir: vector(-Math.PI/1, 1),
-    asset: 'manGreen',
-    frame: 0,
-    drawSize: xyz(32, 32, 0)
+    dir: vector(-Math.PI/1.25, 1),
+    mode: Modes.Stand,
+    modeCount: 1
   }],
   scores: [{
     id: 'some-id',
@@ -118,27 +116,25 @@ export default async function createGame() {
   const shadowCaster = buildShadowCaster(gameState.map)
   
   const myId = 'some-id'
-  const stopGameLoop = loop((step, gameTime) => {
+  const stopAnimationLoop = loop((step) => {
     const { map, players, effects, pills, timeUntilEndGame, scores } = gameState
-    const mapWidth = map.tiles[0].length * map.tileSize
-    const mapHeight = map.tiles.length * map.tileSize
-    const vw = window.innerWidth
-    const vh = window.innerHeight
+    const protagonist = players.find(p => p.id === myId)
+    makeLightsFollowPlayer(shadowCaster, protagonist)
+    animatePlayers(players, step)
+    animateEffects(effects, step)
+  })
+
+  const stopDrawLoop = loop((step, gameTime) => {
+    const { map, players, effects, pills, timeUntilEndGame, scores } = gameState
 
     const protagonist = players.find(p => p.id === myId)
     const protagonistPos = protagonist?.pos.cor || zero
+    const mapWidth = map.tiles[0].length * map.tileSize
+    const mapHeight = map.tiles.length * map.tileSize
     const offset = xyz(
-      centerMapOrPlayerOrBindToEdge(vw, mapWidth, protagonistPos.x),
-      centerMapOrPlayerOrBindToEdge(vh, mapHeight, protagonistPos.y)
+      centerMapOrPlayerOrBindToEdge(window.innerWidth, mapWidth, protagonistPos.x),
+      centerMapOrPlayerOrBindToEdge(window.innerHeight, mapHeight, protagonistPos.y)
     )
-
-    if (protagonist) {
-      shadowCaster.lights.map(l => {
-        l.pos = protagonist.pos
-        l.dir = protagonist.dir
-      })
-    }
-
     drawBackground()
     drawMap(map, offset)
     drawEffects(effects, offset, shadowCaster)
@@ -154,4 +150,17 @@ function drawBackground() {
     ctx.fillStyle = 'black'
     ctx.fillRect(-cw, -ch, cw * 2, ch * 2)
   })
+}
+
+function makeLightsFollowPlayer(shadowCaster: ShadowCaster, protagonist?: Player) {
+  if (protagonist) {
+    shadowCaster.lights.map(l => {
+      l.pos = protagonist.pos
+      l.dir = protagonist.dir
+    })
+  }
+}
+
+function animateEffects(effects: Effect[], step: number) {
+  effects.map(e => e.age += step)
 }

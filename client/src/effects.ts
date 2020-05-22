@@ -1,16 +1,10 @@
 import { getShadowOpacity, ShadowCaster } from "./shadows"
-import { draw, xyz, XYZ, add } from "tiny-game-engine/lib/index"
+import { draw, xyz, XYZ } from "tiny-game-engine/lib/index"
 
 type Particle = number
 
 function ring(age: number, minRadius = 18): Particle[] {
-  const fps = 60
-  const increment = 1/3
-  const times = age/fps
-  const rangeLimit = 2
-  const cycle = Math.floor(increment * times / rangeLimit) % 2 == 0 ? 1 : -1
-  const value = minRadius + cycle * (increment * times % rangeLimit)
-  return [value]
+  return [minRadius + Math.cos(age * 10) * 0.5]
 }
 
 function drawRing(age: number, cor: XYZ, color: XYZ, worldOffset: XYZ) {
@@ -30,19 +24,19 @@ function drawRing(age: number, cor: XYZ, color: XYZ, worldOffset: XYZ) {
   })
 }
 
+function p(x: number) { return -Math.pow(x, 4) - Math.pow(x, 3) + 4 * Math.pow(x, 2) -x + 2 }
 function pulses(age: number, seed: number): Particle[] {
-  const fps = 60
-  const maxRadius = 30
-  const birthFps = 6
-  const minRadius = 10 + seed * 15
-  const increment = 1/3
-  const rangeLimit = maxRadius - minRadius
+  const minRadius = 7 + seed * 15
+  const minX = -2.5
+  const maxX = 1.5
+  const range = maxX - minX
+  const steps = range / 5
   return [
-    minRadius + (increment * ((age + birthFps * 1)/fps) % rangeLimit),
-    minRadius + (increment * ((age + birthFps * 2)/fps) % rangeLimit),
-    minRadius + (increment * ((age + birthFps * 3)/fps) % rangeLimit),
-    minRadius + (increment * ((age + birthFps * 4)/fps) % rangeLimit),
-    minRadius + (increment * ((age + birthFps * 5)/fps) % rangeLimit)
+    minRadius + p((age + steps * 1) % range + minX),
+    minRadius + p((age + steps * 2) % range + minX),
+    minRadius + p((age + steps * 3) % range + minX),
+    minRadius + p((age + steps * 4) % range + minX),
+    minRadius + p((age + steps * 5) % range + minX)
   ]
 }
 
@@ -98,6 +92,7 @@ export interface Effect {
   age: number
   color: XYZ
   value: number
+  speed: number
 }
 
 function drawEffect({age, cor, type, value, color}: Effect, worldOffset: XYZ, shadowCaster: ShadowCaster) {
@@ -110,15 +105,15 @@ function drawEffect({age, cor, type, value, color}: Effect, worldOffset: XYZ, sh
 }
 
 export function buildRingEffect(cor: XYZ): Effect {
-  return { cor, age: 0, type: EffectType.Ring, value: 0, color: xyz(255, 0, 0) }
+  return { cor, age: 0, type: EffectType.Ring, value: 0, color: xyz(255, 0, 0), speed: 500 }
 }
 
 export function buildPulseEffect(cor: XYZ): Effect {
-  return { cor, age: 0, type: EffectType.Pulse, value: Math.random(), color: xyz(0, 255, 0) }
+  return { cor, age: 0, type: EffectType.Pulse, value: Math.random(), color: xyz(0, 255, 0), speed: 500 }
 }
 
 export function buildTrailEffect(cor: XYZ): Effect {
-  return { cor, age: 0, type: EffectType.Trail, value: 8, color: xyz(125, 255, 255) }
+  return { cor, age: 0, type: EffectType.Trail, value: 8, color: xyz(125, 255, 255), speed: 500 }
 }
 
 export function drawEffects(effects: Effect[], worldOffset: XYZ, shadowCaster: ShadowCaster) {
