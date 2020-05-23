@@ -1,6 +1,7 @@
 import { getAsset, AssetKey } from './assets'
 import { draw, Entity, XYZ, frameSequence, FrameSequence } from 'tiny-game-engine/lib/index'
 import { getShadowOpacity, ShadowCaster } from './shadows'
+import { Effect } from './effects'
 
 export const enum Modes {
   Stand = 'Stand',
@@ -17,6 +18,7 @@ export const enum Modes {
 
 export interface Player extends Entity {
   id: string
+  name: string
   color: string
   mode: Modes
   modeCount: number

@@ -1,5 +1,5 @@
 import { getShadowOpacity, ShadowCaster } from "./shadows"
-import { draw, xyz, XYZ } from "tiny-game-engine/lib/index"
+import { draw, xyz, XYZ, zero } from "tiny-game-engine/lib/index"
 
 type Particle = number
 
@@ -87,6 +87,7 @@ const enum EffectType {
   Ring, Pulse, Trail
 }
 export interface Effect {
+  playerId: string
   cor: XYZ
   type: EffectType
   age: number
@@ -95,27 +96,27 @@ export interface Effect {
   speed: number
 }
 
-function drawEffect({age, cor, type, value, color}: Effect, worldOffset: XYZ, shadowCaster: ShadowCaster) {
+function drawEffect({playerId, age, cor, type, value, color}: Effect, worldOffset: XYZ, shadowCaster: ShadowCaster, myId: string) {
   const opacity = getShadowOpacity(cor, shadowCaster) * 2.5
-  if (opacity > 0) {
+  if (opacity > 0 || playerId == myId) {
     if (type === EffectType.Ring) drawRing(age, cor, color, worldOffset)
     if (type === EffectType.Pulse) drawPulse(age, cor, value, color, worldOffset)
     if (type === EffectType.Trail) drawTrail(age, cor, color, value, worldOffset)
   }
 }
 
-export function buildRingEffect(cor: XYZ): Effect {
-  return { cor, age: 0, type: EffectType.Ring, value: 0, color: xyz(255, 0, 0), speed: 500 }
+export function buildRingEffect(playerId: string): Effect {
+  return { playerId, cor: zero, age: 0, type: EffectType.Ring, value: 0, color: xyz(255, 0, 0), speed: 500 }
 }
 
-export function buildPulseEffect(cor: XYZ): Effect {
-  return { cor, age: 0, type: EffectType.Pulse, value: Math.random(), color: xyz(0, 255, 0), speed: 500 }
+export function buildPulseEffect(playerId: string): Effect {
+  return { playerId, cor: zero, age: 0, type: EffectType.Pulse, value: Math.random(), color: xyz(0, 255, 0), speed: 500 }
 }
 
-export function buildTrailEffect(cor: XYZ): Effect {
-  return { cor, age: 0, type: EffectType.Trail, value: 8, color: xyz(125, 255, 255), speed: 500 }
+export function buildTrailEffect(playerId: string): Effect {
+  return { playerId, cor: zero, age: 0, type: EffectType.Trail, value: 8, color: xyz(125, 255, 255), speed: 500 }
 }
 
-export function drawEffects(effects: Effect[], worldOffset: XYZ, shadowCaster: ShadowCaster) {
-  effects.map(effect => drawEffect(effect, worldOffset, shadowCaster))
+export function drawEffects(effects: Effect[], worldOffset: XYZ, shadowCaster: ShadowCaster, myId: string) {
+  effects.map(effect => drawEffect(effect, worldOffset, shadowCaster, myId))
 }

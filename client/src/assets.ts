@@ -6,6 +6,7 @@ enum Asset {
   largeTile = "img/floors/tile-large.png",
   walls = "img/walls/walls.png",
   blood = "img/players/blood/blood.png",
+  stats = "img/menu-backgrounds/stats.bmp",
   
   [`man-green`] = "img/players/man1.png",
   [`man-green-banzaiwalk`] = "img/players/banzai-walk/man1-banzaiwalk.png",
@@ -109,7 +110,7 @@ function loadSound(url: string): Promise<AudioBufferSourceNode> {
 }
 
 function load(key: string, url: string) {
-  const isImage = url.endsWith('gif') || url.endsWith('png')
+  const isImage = url.endsWith('gif') || url.endsWith('png') || url.endsWith('bmp')
   const isSound = url.endsWith('wav') || url.endsWith('mp3')
   const loader = isImage ? loadImage : isSound ? loadSound : null
   if (loader) {

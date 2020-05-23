@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "./build.sh",
-    "watch": "http-server . & nodemon -w src -e ts -x npm run build",
+    "watch": "http-server . & npm run build && chokidar src/**/*.ts -d 1000 -c 'npm run build \"${path}\"'",
     "start": "http-server ."
   },
   "dependencies": {
@@ -19,8 +19,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "chokidar-cli": "^2.1.0",
     "http-server": "^0.12.3",
-    "nodemon": "^2.0.4",
     "typescript": "^3.9.2"
   }
 }

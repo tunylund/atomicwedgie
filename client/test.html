@@ -5,64 +5,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=0">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <script src="/socket.io/socket.io.js'"></script>
-    <script src="lib/simplepeer.min.js"></script>
-    <script type="module" src="js/p2pConnection.mjs"></script>
-    <script type="module">
-        import {connect, on, off, send} from './js/transport.mjs'
-
-        connect()
-        on('open', startLagPingPong)
-        on('pong', pong)
-
-        function startLagPingPong() {
-          function pingForLag() {
-            send('ping', Date.now())
-            const pingPongTimeout = setTimeout(pingForLag, 3000)
-            off('close')
-            on('close', () => clearTimeout(pingPongTimeout))
-          }
-          pingForLag()
-        }
-
-        function pong(lagToServer, peerTime) {
-          console.log('lagToServer:', lagToServer, 'roundTime:', Date.now() - peerTime)
-        }
-
-        // const socket = io.connect({ transports: ['websocket'] });
-        // // socket.on('connect', () => {})
-        // window.peers = []
-        // // socket.on('remote-connected', () => {
-        // //   const peer = init(location.hash === '#1', socket)
-        // //   window.peers.push(peer)
-        // //   if (location.hash === '#1') connect(peer)
-        // //   // if (!peer || peer.peer.signalingState === 'closed') {
-        // //   //     peer = init(location.hash === '#1', socket)
-        // //   //     window.reinit = peer.reinit
-        // //   // } else {
-        // //   //     peer.reinit()
-        // //   // }
-        // // })
-        // let peer
-        // socket.on('connect', () => {
-        //   console.log('connect')
-        //   if (peer) peer.close()
-        //   peer = connectAsNonHost(socket)
-        //   window.peers.push(peer.peer)
-        // })
-        // socket.on('reconnect', () => {
-        //   console.log('reconnect')
-        //   if (peer) peer.close()
-        //   peer = connectAsNonHost(socket)
-        //   window.peers.push(peer.peer)
-        // })
-        // // socket.on('answer', () => {
-        // //   if (peer) peer.close()
-        // //   peer = connectAsNonHost(socket)
-        // //   window.peers.push(peer.peer)
-        // // })
-    </script>
-    <link href="css/main.css" media="screen" rel="stylesheet" type="text/css">
+    <script src="/node_modules/socket.io-client/dist/socket.io.js"></script>
+    <script type="module" src="dist/main.mjs"></script>
+    <link href="css/game.css" media="screen" rel="stylesheet" type="text/css">
   </head>
   <body class="center"></body>
 </html>

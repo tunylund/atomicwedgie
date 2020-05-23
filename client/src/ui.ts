@@ -10,8 +10,11 @@ function drawTime(timeUntilEndGame: number) {
 
 export interface Score {
   id: string
+  name: string
   wedgieCount: number
+  wedgiedCount: number
   banzaiCount: number
+  banzaidCount: number
   score: number
 }
 

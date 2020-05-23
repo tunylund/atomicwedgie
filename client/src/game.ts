@@ -1,103 +1,11 @@
-import { loop, draw, xyz, zero, entity, position, negone, mul, vector, add } from 'tiny-game-engine/lib/index'
-import { preload } from './assets'
-import { drawHud, Score } from './ui'
-import { drawMap, Map } from './maps'
-import { drawPlayers, Player, Modes, animatePlayers } from './players'
+import { loop, draw, xyz, zero } from 'tiny-game-engine/lib/index'
+import { drawHud } from './ui'
+import { drawMap } from './maps'
+import { drawPlayers, Player, animatePlayers } from './players'
 import { drawShadows, buildShadowCaster, ShadowCaster } from './shadows'
-import { drawPills, Pill } from './pills'
-import { Effect, buildRingEffect, drawEffects, buildPulseEffect, buildTrailEffect } from './effects'
-
-interface GameState {
-  players: Player[]
-  pills: Pill[]
-  effects: Effect[]
-  map: Map
-  timeUntilEndGame: number
-  scores: Score[]
-}
-
-const gameState: GameState = {
-  timeUntilEndGame: 15,
-  players: [{
-    id: 'some-id',
-    color: 'green',
-    pos: position(14 * 16, 33 * 16, 0, 1, 1, 0),
-    dim: xyz(32, 32, 32),
-    dir: vector(-Math.PI/1.25, 1),
-    mode: Modes.Stand,
-    modeCount: 1
-  }],
-  scores: [{
-    id: 'some-id',
-    wedgieCount: 12,
-    banzaiCount: 14,
-    score: 10
-  }],
-  pills: [{
-    ...entity(position(7 * 16, 30 * 16)),
-    id: 'some-id',
-    asset: 'pillRed'
-  }],
-  effects: [
-    buildRingEffect(xyz(7 * 16, 30 * 16)),
-    buildPulseEffect(xyz(10 * 16, 30 * 16)),
-    buildTrailEffect(xyz(12 * 16, 30 * 16))
-  ],
-  map: {
-    "floorAsset": 'largeMarble',
-    "tileSize": 16,
-    "tiles": [
-      ",--------------------------------------------------------------.",
-      "|     |     |               |     |                            |",
-      "|     |     |               |     |                            |",
-      "|     |     |               |     |                            |",
-      "|     |     |    Ppppp   Kk |     |                            |",
-      "|     |          ppppp   kk |         Bbbbbbbb    Bbbbbbbb     |",
-      "|     |          ppppp      |         bbbbbbbb    bbbbbbbb     |",
-      "|     |          ppppp      |         bbbbbbbb    bbbbbbbb     |",
-      "|     |                  Kk |         bbbbbbbb    bbbbbbbb     |",
-      "|           |            kk |     |   bbbbbbbb    bbbbbbbb     |",
-      "|           |               |     |                            |",
-      "|           |    Ppppp      |     |                            |",
-      "|           |    ppppp   Kk |     |                            |",
-      "|     |     |    ppppp   kk |     |   Bbbbbbbb    Bbbbbbbb     |",
-      "|     |     |    ppppp      |     |   bbbbbbbb    bbbbbbbb     |",
-      "|     |     |               |     |   bbbbbbbb    bbbbbbbb     |",
-      "|     |     |            Kk |     |   bbbbbbbb    bbbbbbbb     |",
-      "|     |     |            kk |     |   bbbbbbbb    bbbbbbbb     |",
-      "|     |     |               |     |                            |",
-      "|     |     |                     |                            |",
-      "|     |     |                     |                            |",
-      "|     |     |                     |    Cc          Cc    Cc    |",
-      "|     |     |                     |    cc          cc    cc    |",
-      "|     |                           |                            |",
-      "|     |                     |     ;-----------    -------------|",
-      "|     |                     |                                  |",
-      "|     ;-------.             |                                  |",
-      "|             |             |                                  |",
-      "|             |             |                                  |",
-      "|             |   Hhhhhh    |                                  |",
-      "|             |   hhhhhh    |                                  |",
-      "|             ;-------------:                                  |",
-      "|    -----.                                                    |",
-      "|         |                                                    |",
-      "|         |                                                    |",
-      "|         |                                                    |",
-      "|   Lll   |                                                    |",
-      "|   lll   |                                                    |",
-      "|   lll   |                                                    |",
-      "|   lll   |        ,--------------    ---------------------    |",
-      "|   lll   |        |   Ss  Ss  Ss                              |",
-      "|   lll   |   |        ss  ss  ss                              |",
-      "|   lll   |   |                                                |",
-      "|   lll       |                                                |",
-      "|             |                         Ww   Ww   Ww   Ww      |",
-      "|             |    |                  | ww | ww | ww | ww |    |",
-      "|             |    |                  | ww | ww | ww | ww |    |",
-      ";--------------------------------------------------------------:"
-    ],
-  }
-}
+import { drawPills } from './pills'
+import { Effect, drawEffects } from './effects'
+import { GameState } from './main'
 
 function centerMapOrPlayerOrBindToEdge(availableSpace: number, mapSize: number, playerPos: number) {
   const mapFitsOnScreen = availableSpace > mapSize
@@ -109,19 +17,18 @@ function centerMapOrPlayerOrBindToEdge(availableSpace: number, mapSize: number, 
     -playerPos
 }
 
-export default async function createGame() {
-  await preload()
-  // connect()
+export function drawGame(gameState: GameState) {
 
   const shadowCaster = buildShadowCaster(gameState.map)
   
   const myId = 'some-id'
+
   const stopAnimationLoop = loop((step) => {
-    const { map, players, effects, pills, timeUntilEndGame, scores } = gameState
+    const { players, effects } = gameState
     const protagonist = players.find(p => p.id === myId)
     makeLightsFollowPlayer(shadowCaster, protagonist)
     animatePlayers(players, step)
-    animateEffects(effects, step)
+    animateEffects(effects, players, step)
   })
 
   const stopDrawLoop = loop((step, gameTime) => {
@@ -137,12 +44,17 @@ export default async function createGame() {
     )
     drawBackground()
     drawMap(map, offset)
-    drawEffects(effects, offset, shadowCaster)
+    drawEffects(effects, offset, shadowCaster, myId)
     drawPlayers(myId, players, offset, shadowCaster)
     drawPills(pills, offset, shadowCaster)
     drawShadows(shadowCaster, offset)
     drawHud(timeUntilEndGame, scores, myId)
   })
+
+  return () => {
+    stopAnimationLoop()
+    stopDrawLoop()
+  }
 }
 
 function drawBackground() {
@@ -161,6 +73,9 @@ function makeLightsFollowPlayer(shadowCaster: ShadowCaster, protagonist?: Player
   }
 }
 
-function animateEffects(effects: Effect[], step: number) {
-  effects.map(e => e.age += step)
+function animateEffects(effects: Effect[], players: Player[], step: number) {
+  effects.map(e => {
+    e.cor = players.find(p => p.id === e.playerId)?.pos.cor || zero
+    e.age += step
+  })
 }
