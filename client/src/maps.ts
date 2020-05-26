@@ -1,5 +1,6 @@
 import { draw, XYZ } from 'tiny-game-engine/lib/index'
 import { getAsset, AssetKey } from './assets'
+import { Map } from '../../types/types'
 
 function tileNumberToCoordinates(tile: number, tileSize: number, tilesPerRow: number) {
   const row = Math.floor(tile / tilesPerRow) * tileSize
@@ -34,21 +35,14 @@ function drawWalls(ctx: CanvasRenderingContext2D, tileSize: number, tiles: strin
   const wallsImage = getAsset<HTMLImageElement>('walls')
   const tilesPerRow = wallsImage.width / tileSize
   mapTiles(tiles, (tile, col, row) => {
-    if (walls.has(tile)) {
-      //@ts-ignore
-      const { x, y } = tileNumberToCoordinates(walls.get(tile), tileSize, tilesPerRow)
+    if (walls.includes(tile)) {
+      const { x, y } = tileNumberToCoordinates(walls.indexOf(tile), tileSize, tilesPerRow)
       ctx.drawImage(
         wallsImage,
         x, y, tileSize, tileSize,
         col * tileSize, row * tileSize, tileSize, tileSize)
     }
   })
-}
-
-export interface Map {
-  tileSize: number,
-  tiles: string[],
-  floorAsset: AssetKey
 }
 
 function createMapImage(map: Map) {
@@ -66,9 +60,12 @@ function createMapImage(map: Map) {
   return canvas
 }
 
-let mapImage: HTMLCanvasElement
+let mapImage: HTMLCanvasElement, mapImageId: string
 export function drawMap(map: Map, worldOffset: XYZ) {
-  mapImage = mapImage || createMapImage(map)
+  if (mapImageId != map.id) {
+    mapImage = createMapImage(map)
+    mapImageId = map.id
+  }
   draw((ctx, cw, ch) => {
     ctx.drawImage(mapImage, worldOffset.x, worldOffset.y)
   })
@@ -78,19 +75,24 @@ export function isSolid(map: Map, x: number, y: number) {
   const tileX = x / map.tileSize
   const tileY = y / map.tileSize
   const tile = map.tiles[tileY][tileX]
-  return walls.has(tile) ||
+  return walls.includes(tile) ||
     decorations.has(tile) || 
     decorations_.includes(tile)
 }
 
-const walls = new Map<string, number>([
-  [',', 0],
-  ['.', 1],
-  ['-', 2],
-  ['|', 3],
-  [';', 5],
-  [':', 6],
-])
+
+export function isShadowCasting(map: Map, x: number, y: number) {
+  const tileX = x / map.tileSize
+  const tileY = y / map.tileSize
+  const tile = map.tiles[tileY][tileX]
+  return walls.includes(tile) ||
+    bigDecorations.includes(tile) || 
+    bigDecorations_.includes(tile)
+}
+
+const walls = [ ',', '.', '-', '|', '|', ';', ':' ]
+const bigDecorations = [ 'Z', 'X', 'O']
+const bigDecorations_ = [ 'Z', 'X', 'O'].map(s => s.toLowerCase())
 
 const decorations = new Map<string, AssetKey>([
   [ 'B', 'biliardTable' ],

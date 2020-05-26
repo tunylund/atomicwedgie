@@ -1,36 +1,26 @@
 import { getAsset, AssetKey } from './assets'
-import { draw, Entity, XYZ, frameSequence, FrameSequence } from 'tiny-game-engine/lib/index'
+import { draw, XYZ, frameSequence, FrameSequence, xyz } from 'tiny-game-engine/lib/index'
 import { getShadowOpacity, ShadowCaster } from './shadows'
-import { Effect } from './effects'
+import { Player, Modes, EffectType } from '../../types/types'
+import { drawRing, drawPulse, drawTrail } from './effects'
+import { send } from 'shared-state-client/dist/index'
 
-export const enum Modes {
-  Stand = 'Stand',
-  Walk = 'Walk',
-  BanzaiStand = 'BanzaiStand',
-  BanzaiWalk = 'BanzaiWalk',
-  BanzaiAttack = 'BanzaiAttack',
-  WedgieAttackStand = 'WedgieAttackStand',
-  WedgieAttackWalk = 'WedgieAttackWalk',
-  DeadByBanzai = 'DeadByBanzai',
-  DeadByWedgie = 'DeadByWedgie',
-  DeadByWedgieWalk = 'DeadByWedgieWalk'
-}
+const red = xyz(255, 0, 0)
+const green = xyz(0, 255, 0)
+const blue = xyz(0, 0, 255)
 
-export interface Player extends Entity {
-  id: string
-  name: string
-  color: string
-  mode: Modes
-  modeCount: number
-}
-
-function drawPlayer({ id, pos, dir }: Player, worldOffset: XYZ) {
+function drawPlayer({ id, pos, dir, effects }: Player, worldOffset: XYZ) {
   const animation = playerAnimations.get(id)
   if (animation) {
     const {image, x, y, frameSize} = animation.frameSequence
     let dx = -frameSize.width/2
     let dy = -frameSize.height/2
-  
+
+    effects.map(effect => {
+      if (effect.type === EffectType.Red) drawRing(effect.duration, pos.cor, red, worldOffset)
+      if (effect.type === EffectType.Green) drawPulse(effect.duration, pos.cor, green, worldOffset)
+    })
+    
     draw((ctx: CanvasRenderingContext2D) => {
       ctx.translate(worldOffset.x, worldOffset.y)
       ctx.translate(pos.cor.x, pos.cor.y)
@@ -46,6 +36,15 @@ export function drawPlayers(myId: string, players: Player[], worldOffset: XYZ, s
   players
     .filter(player => player.id === myId || getShadowOpacity(player.pos.cor, shadowCaster) > 0)
     .map(player => drawPlayer(player, worldOffset))
+
+  const blueEffect = players
+    .find(p => p.id === myId)?.effects
+    .find(effect => effect.type === EffectType.Blue)
+  if (blueEffect) {
+    players
+      .filter(p => p.id !== myId)
+      .map(player => drawTrail(blueEffect.duration, player.pos.cor, blue, worldOffset))
+  }
 }
 
 function determineEffectiveFrameSequence(mode: Modes, color: string): FrameSequence {
@@ -81,6 +80,11 @@ export function animatePlayers(players: Player[], step: number) {
     const animation = playerAnimations.get(id)
     if (animation && animation.modeCount === modeCount) {
       animation.frameSequence.step(step)
+      if ([
+        Modes.BanzaiAttack,
+        Modes.WedgieAttackStand,
+        Modes.WedgieAttackWalk].includes(mode) &&
+        animation.frameSequence.finished) send('reset-attack')
     } else {
       playerAnimations.set(id, {
         modeCount,

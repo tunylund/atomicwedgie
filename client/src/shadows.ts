@@ -1,7 +1,7 @@
 import { getAsset } from './assets'
 import { fixedSizeDrawingLayer, draw, position, Entity, xyz, XYZ, zero, Layer, negone, mul } from 'tiny-game-engine/lib/index'
-import { Player } from './players'
-import { Map, isSolid } from './maps'
+import { isSolid, isShadowCasting } from './maps'
+import { Map } from '../../types/types'
 
 interface Light extends Entity {
   image: HTMLImageElement
@@ -20,19 +20,20 @@ function buildLights(): Light[] {
 }
 
 interface ShadowCaster {
+  round: string
   layer: Layer
   casters: Polygon[]
   lights: Light[]
 }
 
-function buildShadowCaster(map: Map): ShadowCaster {
+function buildShadowCaster(map: Map, round: string): ShadowCaster {
   const casters = buildWallPolygons(map)
   const layer = fixedSizeDrawingLayer(
     map.tiles[0].length * map.tileSize,
     map.tiles.length * map.tileSize
   )
   const lights = buildLights()
-  return { casters, layer, lights }
+  return { casters, layer, lights, round }
 }
 
 function drawShadows({ casters, layer, lights }: ShadowCaster, worldOffset: XYZ) {
@@ -292,7 +293,7 @@ function buildWallPolygons(map: Map): Polygon[] {
   //horPass
   for(let y=th; y<h-th; y=y+th) {
     for(let x=tw; x<w-tw; x=x+tw) {
-      let hit = isSolid(map, x, y)
+      let hit = isShadowCasting(map, x, y)
       if(hit) {
         if(poly) {
           poly[1].x = poly[2].x = x + tw
@@ -322,7 +323,7 @@ function buildWallPolygons(map: Map): Polygon[] {
   //verPass
   for(let x=tw; x<w-tw; x=x+tw) {
     for(let y=th; y<h-th; y=y+th) {
-      let hit = isSolid(map, x, y)
+      let hit = isShadowCasting(map, x, y)
       if(hit) {
         if(poly) {
           poly[2].y = poly[3].y = y + th

@@ -1,11 +1,12 @@
 import { loop, draw, xyz, zero } from 'tiny-game-engine/lib/index'
 import { drawHud } from './ui'
 import { drawMap } from './maps'
-import { drawPlayers, Player, animatePlayers } from './players'
+import { drawPlayers, animatePlayers } from './players'
 import { drawShadows, buildShadowCaster, ShadowCaster } from './shadows'
 import { drawPills } from './pills'
-import { Effect, drawEffects } from './effects'
-import { GameState } from './main'
+import { GameState, Player, Score } from '../../types/types'
+import { state, ACTIONS, on } from 'shared-state-client/dist/index'
+import { drawScores } from './results'
 
 function centerMapOrPlayerOrBindToEdge(availableSpace: number, mapSize: number, playerPos: number) {
   const mapFitsOnScreen = availableSpace > mapSize
@@ -17,22 +18,20 @@ function centerMapOrPlayerOrBindToEdge(availableSpace: number, mapSize: number, 
     -playerPos
 }
 
-export function drawGame(gameState: GameState) {
-
-  const shadowCaster = buildShadowCaster(gameState.map)
-  
-  const myId = 'some-id'
+export function startDrawingGame(myId: string) {
+  let shadowCaster: ShadowCaster
+  on(ACTIONS.INIT, (id: string) => myId = id )
 
   const stopAnimationLoop = loop((step) => {
-    const { players, effects } = gameState
+    const { players, map, round } = state<GameState>()
     const protagonist = players.find(p => p.id === myId)
+    if (shadowCaster?.round !== round) shadowCaster = buildShadowCaster(map, round)
     makeLightsFollowPlayer(shadowCaster, protagonist)
     animatePlayers(players, step)
-    animateEffects(effects, players, step)
   })
 
   const stopDrawLoop = loop((step, gameTime) => {
-    const { map, players, effects, pills, timeUntilEndGame, scores } = gameState
+    const { map, players, pills, timeUntilEndGame, timeUntilNextGame, scores } = state<GameState>()
 
     const protagonist = players.find(p => p.id === myId)
     const protagonistPos = protagonist?.pos.cor || zero
@@ -40,21 +39,28 @@ export function drawGame(gameState: GameState) {
     const mapHeight = map.tiles.length * map.tileSize
     const offset = xyz(
       centerMapOrPlayerOrBindToEdge(window.innerWidth, mapWidth, protagonistPos.x),
-      centerMapOrPlayerOrBindToEdge(window.innerHeight, mapHeight, protagonistPos.y)
-    )
+      centerMapOrPlayerOrBindToEdge(window.innerHeight, mapHeight, protagonistPos.y))
     drawBackground()
     drawMap(map, offset)
-    drawEffects(effects, offset, shadowCaster, myId)
-    drawPlayers(myId, players, offset, shadowCaster)
     drawPills(pills, offset, shadowCaster)
+    drawPlayers(myId, players, offset, shadowCaster)
     drawShadows(shadowCaster, offset)
     drawHud(timeUntilEndGame, scores, myId)
+    tryDrawResults(timeUntilNextGame, scores)
   })
 
   return () => {
     stopAnimationLoop()
     stopDrawLoop()
   }
+}
+
+let clearResults: (() => void)|void
+function tryDrawResults(timeUntilNextGame: number, scores: Score[]) {
+  if (!clearResults && timeUntilNextGame >= 0)
+    clearResults = drawScores(timeUntilNextGame, scores)
+  if (clearResults && timeUntilNextGame <= 0)
+    clearResults = clearResults()
 }
 
 function drawBackground() {
@@ -71,11 +77,4 @@ function makeLightsFollowPlayer(shadowCaster: ShadowCaster, protagonist?: Player
       l.dir = protagonist.dir
     })
   }
-}
-
-function animateEffects(effects: Effect[], players: Player[], step: number) {
-  effects.map(e => {
-    e.cor = players.find(p => p.id === e.playerId)?.pos.cor || zero
-    e.age += step
-  })
 }

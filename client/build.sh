@@ -13,7 +13,7 @@ if [ -f "src/${CHANGED_FILE}" ]; then
     --forceConsistentCasingInFileNames true \
     "src/${CHANGED_FILE}"
 else 
-  ./node_modules/.bin/tsc
+  ./node_modules/.bin/tsc --build
 fi
 
 

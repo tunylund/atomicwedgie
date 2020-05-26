@@ -79,7 +79,48 @@ const resources = {
   arrgh2: 'sounds/arrgh/2.wav',
   arrgh3: 'sounds/arrgh/3.wav',
   arrgh4: 'sounds/arrgh/4.wav'
+}
 
+export const assets = new Map()
+
+function loadImage(url) {
+  return fetch(url)
+    .then(response => response.blob())
+    .then(blob => {
+      const image = new Image()
+      image.src = URL.createObjectURL(blob)
+      return image
+  })
+}
+
+const audioCtx = new AudioContext()
+function loadSound(url) {
+  return fetch(url)
+    .then(response => response.arrayBuffer())
+    .then(buffer => {
+      const source = audioCtx.createBufferSource()
+      audioCtx.decodeAudioData(buffer, function(decodedData) {
+        source.buffer = decodedData
+        source.connect(audioCtx.destination)
+      })
+      return source
+  })
+}
+
+function load(key, url) {
+  const isImage = url.endsWith('gif') || url.endsWith('png')
+  const isSound = url.endsWith('wav') || url.endsWith('mp3')
+  
+  const loader = isImage ? loadImage : isSound ? loadSound : () => Promise.reject(`unsupported resource type ${url}`)
+  return loader(url)
+    .then(resource => assets.set(key, resource))
+    .catch(err => console.error(err))
+}
+
+export async function preload() {
+  await Promise.all(Object.entries(resources)
+    .map(([key, url]) => load(key, url)))
+    .then(() => console.log(`loaded ${assets.size} assets`))
 }
 
 export default resources

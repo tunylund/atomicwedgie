@@ -23,7 +23,7 @@ function endGame() {
 
 function emitNewGame(player) {
   player.reset()
-  send(player.channel, 'newGame', {
+  send(player.id, 'newGame', {
     gameTime: endGameTimeout.timeLeft,
     map: map.toJson(),
     player: player.toJson(),
@@ -31,14 +31,14 @@ function emitNewGame(player) {
       .filter(p => p.id != player.id)
       .map(p => p.toJson())
   })
-  broadcastToOthers(player.channel, "enemyUpdate", player.toJson())
+  broadcastToOthers(player.id, "enemyUpdate", player.toJson())
 }
 
 function emitEndGame(player) {
   const scores = players
     .map(player => ({ [player.id] : player.scores()}))
     .reduce(Object.assign, {})
-  send(player.channel, 'endGame', {
+  send(player.id, 'endGame', {
     scores,
     nextGameIn: newGameTimeout.timeLeft
   })
@@ -51,12 +51,8 @@ function handleJoinRequest(request, player) {
   player.color = request.color
   console.log("joinrequest from " + player.name);
 
-
-
-  send(player.channel, 'join', {
-    player: player.toJson()
-  })
-  broadcastToOthers(player.channel, 'enemyJoin', player.toJson())
+  send(player.id, 'join', { player: player.toJson() })
+  broadcastToOthers(player.id, 'enemyJoin', player.toJson())
 
   emitNewGame(player)
   if(newGameTimeout.isTicking) {
@@ -92,21 +88,21 @@ function consumePill(pillId, player) {
   if (pill) {
     pill.applyEffect(player)
     for(let player of players) {
-      send(player.channel, 'delPill', pillId)
+      send(player.id, 'delPill', pillId)
     }
   }
 }
 
 function lagCheck(player) {
   const now = new Date()
-  send(player.channel, 'lagCheck', {
+  send(player.id, 'lagCheck', {
     lag: now.getTime() + now.getTimezoneOffset()*60000
   })
 }
 
 function disconnect(player) {
   console.log("disconnect from " + player.name);
-  broadcastToOthers(player.channel, 'enemyDisconnect', player.id)
+  broadcastToOthers(player.id, 'enemyDisconnect', player.id)
   
   player.remove()
   players.splice(players.findIndex(p => p.id === player.id), 1)

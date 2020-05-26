@@ -1,21 +1,12 @@
 import { draw } from 'tiny-game-engine/lib/index'
+import { Score } from '../../types/types'
 
 function drawTime(timeUntilEndGame: number) {
   draw((ctx, cw, ch) => {
     ctx.font = '12px Arial'
     ctx.fillStyle = 'white'
-    ctx.fillText(`time: ${timeUntilEndGame}`, -cw + 15, -ch + 25)
+    ctx.fillText(`time: ${Math.max(Math.floor(timeUntilEndGame), 0)}`, -cw + 15, -ch + 25)
   })
-}
-
-export interface Score {
-  id: string
-  name: string
-  wedgieCount: number
-  wedgiedCount: number
-  banzaiCount: number
-  banzaidCount: number
-  score: number
 }
 
 function drawCurrentScore(scores: Score[], myId: string) {

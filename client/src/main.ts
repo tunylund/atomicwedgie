@@ -1,117 +1,97 @@
+import { connect, on, ACTIONS, send } from 'shared-state-client/dist/index'
 import { preload } from './assets'
-import { drawGame } from './game'
-import { Map } from './maps'
-import { Player, Modes } from './players'
-import { Pill } from './pills'
-import { Effect, buildRingEffect, buildPulseEffect, buildTrailEffect } from './effects'
-import { Score } from './ui'
-import { position, xyz, vector, entity } from 'tiny-game-engine/lib/index'
-import { drawScores } from './results'
+import { startDrawingGame } from './game'
+import { buildControls, Controls, draw, loop } from 'tiny-game-engine/lib/index'
 
-export interface GameState {
-  players: Player[]
-  pills: Pill[]
-  effects: Effect[]
-  map: Map
-  timeUntilEndGame: number
-  timeUntilNextGame: number
-  scores: Score[]
+function loadAssets() {
+  let ready = 0, expected = 1
+  const stopLoader = loop(() => {
+    draw((ctx, cw, ch) => {
+      ctx.fillStyle = '#111'
+      ctx.fillRect(-cw, -ch, 2*cw, 2*ch)
+      ctx.fillStyle = '#222'
+      ctx.fillRect(-cw, -ch, 2*cw/expected * ready, 2*ch)
+      const text = `loading ${ready}/${expected}`
+      ctx.fillStyle = 'white'
+      ctx.font = '16px Arial'
+      ctx.fillText(text, -ctx.measureText(text).width/2, 0)
+    })
+  })
+
+  return preload((r, e) => {
+    ready = r
+    expected = e
+  }).then(() => {
+    stopLoader()
+  })
 }
 
-const gameState: GameState = {
-  timeUntilEndGame: 0,
-  timeUntilNextGame: 15,
-  players: [{
-    id: 'some-id',
-    name: 'someone',
-    color: 'green',
-    pos: position(14 * 16, 33 * 16, 0, 1, 1, 0),
-    dim: xyz(32, 32, 32),
-    dir: vector(-Math.PI/1.25, 1),
-    mode: Modes.Stand,
-    modeCount: 1
-  }],
-  scores: [{
-    id: 'some-id',
-    name: 'some-name',
-    wedgieCount: 12,
-    wedgiedCount: 1,
-    banzaiCount: 14,
-    banzaidCount: 2,
-    score: 10
-  }],
-  pills: [{
-    ...entity(position(7 * 16, 30 * 16)),
-    id: 'some-id',
-    asset: 'pillRed'
-  }],
-  effects: [
-    buildRingEffect('some-id'),
-    buildPulseEffect('some-id'),
-    buildTrailEffect('another-id')
-  ],
-  map: {
-    "floorAsset": 'largeMarble',
-    "tileSize": 16,
-    "tiles": [
-      ",--------------------------------------------------------------.",
-      "|     |     |               |     |                            |",
-      "|     |     |               |     |                            |",
-      "|     |     |               |     |                            |",
-      "|     |     |    Ppppp   Kk |     |                            |",
-      "|     |          ppppp   kk |         Bbbbbbbb    Bbbbbbbb     |",
-      "|     |          ppppp      |         bbbbbbbb    bbbbbbbb     |",
-      "|     |          ppppp      |         bbbbbbbb    bbbbbbbb     |",
-      "|     |                  Kk |         bbbbbbbb    bbbbbbbb     |",
-      "|           |            kk |     |   bbbbbbbb    bbbbbbbb     |",
-      "|           |               |     |                            |",
-      "|           |    Ppppp      |     |                            |",
-      "|           |    ppppp   Kk |     |                            |",
-      "|     |     |    ppppp   kk |     |   Bbbbbbbb    Bbbbbbbb     |",
-      "|     |     |    ppppp      |     |   bbbbbbbb    bbbbbbbb     |",
-      "|     |     |               |     |   bbbbbbbb    bbbbbbbb     |",
-      "|     |     |            Kk |     |   bbbbbbbb    bbbbbbbb     |",
-      "|     |     |            kk |     |   bbbbbbbb    bbbbbbbb     |",
-      "|     |     |               |     |                            |",
-      "|     |     |                     |                            |",
-      "|     |     |                     |                            |",
-      "|     |     |                     |    Cc          Cc    Cc    |",
-      "|     |     |                     |    cc          cc    cc    |",
-      "|     |                           |                            |",
-      "|     |                     |     ;-----------    -------------|",
-      "|     |                     |                                  |",
-      "|     ;-------.             |                                  |",
-      "|             |             |                                  |",
-      "|             |             |                                  |",
-      "|             |   Hhhhhh    |                                  |",
-      "|             |   hhhhhh    |                                  |",
-      "|             ;-------------:                                  |",
-      "|    -----.                                                    |",
-      "|         |                                                    |",
-      "|         |                                                    |",
-      "|         |                                                    |",
-      "|   Lll   |                                                    |",
-      "|   lll   |                                                    |",
-      "|   lll   |                                                    |",
-      "|   lll   |        ,--------------    ---------------------    |",
-      "|   lll   |        |   Ss  Ss  Ss                              |",
-      "|   lll   |   |        ss  ss  ss                              |",
-      "|   lll   |   |                                                |",
-      "|   lll       |                                                |",
-      "|             |                         Ww   Ww   Ww   Ww      |",
-      "|             |    |                  | ww | ww | ww | ww |    |",
-      "|             |    |                  | ww | ww | ww | ww |    |",
-      ";--------------------------------------------------------------:"
-    ],
+function showConnectionMessage() {
+  return loop((step, gameTime) => {
+    draw((ctx, cw, ch) => {
+      ctx.fillStyle = '#222'
+      ctx.fillRect(-cw, -ch, 2*cw, 2*ch)
+      const text = `connecting ${Math.floor(gameTime / 1000)}`
+      ctx.fillStyle = 'white'
+      ctx.font = '16px Arial'
+      ctx.fillText(text, -ctx.measureText(text).width/2, 0)
+    })
+  })
+}
+
+function showError(error: Error) {
+  return loop((step, gameTime) => {
+    draw((ctx, cw, ch) => {
+      ctx.fillStyle = '#222'
+      ctx.fillRect(-cw, -ch, 2*cw, 2*ch)
+      const text = `failed :( ${error}`
+      ctx.fillStyle = 'white'
+      ctx.font = '16px Arial'
+      ctx.fillText(text, -ctx.measureText(text).width/2, 0)
+    })
+  })
+}
+export default async function createGame() {
+  await loadAssets()
+  try {
+    const stopConnectMessage = showConnectionMessage()
+    const myId = await beginConnection()
+    stopConnectMessage()
+    startDrawingGame(myId)
+  
+    on(ACTIONS.ERROR, (error: any) => {
+      console.error(error)
+    })
+
+    buildControls(window, (controls: Controls) => {
+      send('input', {
+        arrowUp: controls.keys.ArrowUp,
+        arrowRight: controls.keys.ArrowRight,
+        arrowDown: controls.keys.ArrowDown,
+        arrowLeft: controls.keys.ArrowLeft,
+        attack: controls.keys.KeyA || controls.keys.KeyX,
+        banzaiSwich: controls.keys.KeyS || controls.keys.KeyC
+      })
+    })
+  } catch (err) {
+    showError(err)
   }
 }
 
-export default async function createGame() {
-  const { timeUntilEndGame, scores } = gameState
-  await preload()
-  // connect()
-  drawGame(gameState)
-  const clearResults = drawScores(timeUntilEndGame, scores)
+function beginConnection(): Promise<string> {
+  let myId: string, stateIsReady: boolean
+  
+  return new Promise((resolve, reject) => {
+    function tryResolve() {
+      if (myId && stateIsReady) resolve(myId)
+    }
+    connect('127.0.0.1:8888')
+    on(ACTIONS.INIT, (id: string) => myId = id)
+    on(ACTIONS.STATE_INIT, () => stateIsReady = true )
+    on(ACTIONS.INIT, tryResolve)
+    on(ACTIONS.STATE_INIT, tryResolve)
+    on(ACTIONS.ERROR, reject)
+  })
 }
 
 createGame()

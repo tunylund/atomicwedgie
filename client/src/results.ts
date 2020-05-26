@@ -1,13 +1,12 @@
-import { Score } from "./ui"
-import { Player } from "./players"
 import { goodAdjective, badAdjective } from "./texts"
+import { Score } from "../../types/types"
 
-function getTimer(timeUntilEndGame: number) {
+function getTimer(timeUntilNextGame: number) {
   const startTime = Date.now()
   const div = document.createElement('div')
   div.className = 'timer'
   function setTime() {
-    const timeLeft = timeUntilEndGame - Math.floor((Date.now() - startTime) / 1000)
+    const timeLeft = Math.floor((timeUntilNextGame - (Date.now() - startTime) / 1000))
     div.innerHTML = `Next game in: ${Math.max(timeLeft, 0)}s`
   }
   let timerInterval = setInterval(setTime, 100)
@@ -20,10 +19,10 @@ function getTimer(timeUntilEndGame: number) {
 function getHighestScore(scores: Score[]) {
   const score = scores.sort((a, b) => a.score - b.score)[0]
   return `<div class='score'>
-          <span class='score-label'>Highest Score: </span>${score.name}
-            <span class='score-value'>${score.score}</span><br>
+          <span class='score-label'>Highest Score: </span>${score.name}<br>
           with <span class='score-value'>${score.wedgieCount}</span> wedgies and
-          <span class='score-value'>${score.banzaiCount}</span> ${goodAdjective()} banzais.
+          <span class='score-value'>${score.banzaiCount}</span> ${goodAdjective()} banzais<br>
+          totaling to <span class='score-value'>${score.score}</span> points.
         </div>`
 }
 
@@ -47,8 +46,8 @@ function getScores(scores: Score[]) {
   </table>`
 }
 
-export function drawScores(timeUntilEndGame: number, scores: Score[]) {
-  const {timer, timerInterval} = getTimer(timeUntilEndGame)
+export function drawScores(timeUntilNextGame: number, scores: Score[]) {
+  const {timer, timerInterval} = getTimer(timeUntilNextGame)
   const frag = document.createElement('div')
   frag.className = 'score-container'
   frag.innerHTML = `<div class='score-table'>

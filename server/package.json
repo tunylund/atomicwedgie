@@ -1,0 +1,34 @@
+{
+  "name": "atomic-wedgie",
+  "description": "Awesome wedgienaut",
+  "version": "1.0.0",
+  "homepage": "https://github.com/tunylund/atomicwedgie",
+  "keywords": [
+    "game",
+    "websocket",
+    "js",
+    "javascript",
+    "wedgies"
+  ],
+  "author": "Tuomas Nylund <tunylund@gmail>",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "./build.sh",
+    "watch": "npm run build && nodemon -w dist dist/index.mjs & chokidar src/**/*.ts -d 1000 -c 'npm run build \"${path}\"'",
+    "start": "node dist/index.mjs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^13.13.5",
+    "@types/uuid": "^8.0.0",
+    "chokidar-cli": "^2.1.0",
+    "nodemon": "^2.0.3",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "shared-state-server": "^0.1.0",
+    "tiny-game-engine": "git+ssh://git@github.com/tunylund/tiny-game-engine.git",
+    "uuid": "^8.1.0"
+  }
+}

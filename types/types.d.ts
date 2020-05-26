@@ -1,8 +1,82 @@
-import { AssetKey } from "../../types/types"
+import { Entity, XYZ } from 'tiny-game-engine/lib/index'
+import { State } from 'shared-state-client/dist/index'
 
-const assets = new Map<AssetKey, HTMLImageElement|AudioBufferSourceNode>()
+export const enum Modes {
+  Stand = 'Stand',
+  Walk = 'Walk',
+  BanzaiStand = 'BanzaiStand',
+  BanzaiWalk = 'BanzaiWalk',
+  BanzaiAttack = 'BanzaiAttack',
+  WedgieAttackStand = 'WedgieAttackStand',
+  WedgieAttackWalk = 'WedgieAttackWalk',
+  DeadByBanzai = 'DeadByBanzai',
+  DeadByWedgie = 'DeadByWedgie',
+  DeadByWedgieWalk = 'DeadByWedgieWalk'
+}
 
-enum Asset {
+export interface Player extends Entity {
+  id: string
+  name: string
+  color: string
+  mode: Modes
+  modeCount: number
+  deathTimeout: number
+  isFreshAttack: boolean
+  effects: {id: string, type: EffectType, duration: number}[]
+}
+
+export interface Pill extends Entity {
+  id: string
+  asset: AssetKey
+  effectDuration: number
+  type: EffectType
+}
+
+export interface GameState extends State {
+  round: string
+  players: Player[]
+  pills: Pill[]
+  map: Map
+  timeUntilEndGame: number
+  timeUntilNextGame: number
+  scores: Score[]
+}
+
+export const enum EffectType {
+  Red = 'red',
+  Green = 'green',
+  Blue = 'blue'
+}
+
+export interface Effect {
+  playerId: string
+  cor: XYZ
+  type: EffectType
+  age: number
+  color: XYZ
+  value: number
+  speed: number
+}
+
+export interface Score {
+  id: string
+  name: string
+  wedgieCount: number
+  wedgiedCount: number
+  banzaiCount: number
+  banzaidCount: number
+  score: number
+}
+
+export interface Map {
+  id: string,
+  name: string,
+  tileSize: number,
+  tiles: string[],
+  floorAsset: AssetKey
+}
+
+export const enum Asset {
   grass = "img/floors/grass-huge.png",
   grassHuge2 = "img/floors/grass2-huge.png",
   largeMarble = "img/floors/largemarble-huge.png",
@@ -86,54 +160,4 @@ enum Asset {
   // arrgh4 = 'sounds/arrgh/4.wav'
 }
 
-function loadImage(url: string): Promise<HTMLImageElement> {
-  return fetch(url)
-    .then(response => response.blob())
-    .then(blob => {
-      const image = new Image()
-      image.src = URL.createObjectURL(blob)
-      return image
-  })
-}
-
-const audioCtx = new AudioContext()
-function loadSound(url: string): Promise<AudioBufferSourceNode> {
-  return fetch(url)
-    .then(response => response.arrayBuffer())
-    .then(buffer => {
-      const source = audioCtx.createBufferSource()
-      audioCtx.decodeAudioData(buffer, function(decodedData) {
-        source.buffer = decodedData
-        source.connect(audioCtx.destination)
-      })
-      return source
-  })
-}
-
-function load(key: string, url: string): Promise<any> {
-  const isImage = url.endsWith('gif') || url.endsWith('png') || url.endsWith('bmp')
-  const isSound = url.endsWith('wav') || url.endsWith('mp3')
-  const loader = isImage ? loadImage : isSound ? loadSound : null
-  if (loader) {
-    // @ts-ignore
-    return loader(url).then((resource: any) => assets.set(key, resource))
-  }
-
-  return Promise.reject(`unsupported resource type ${url}`)
-}
-
-function preload(onAssetReady: (ready: number, expected: number) => void) {
-  let ready = 0, expected = Object.entries(Asset).length
-  const promises = Object.entries(Asset)
-    .map(([key, url]) => load(key, url).then(() => onAssetReady(++ready, expected)))
-  onAssetReady(ready, expected)
-  return Promise.all(promises)
-}
-
-function getAsset<T extends HTMLImageElement | AudioBufferSourceNode>(asset: AssetKey): T {
-  const r = assets.get(asset)
-  if (r === undefined) throw new Error(`asset ${asset} is not available`)
-  else return r as T
-}
-
-export { preload, getAsset, AssetKey }
+export type AssetKey = keyof typeof Asset

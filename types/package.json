@@ -1,0 +1,16 @@
+{
+  "name": "types",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "shared-state-client": "^0.1.0",
+    "tiny-game-engine": "git+ssh://git@github.com/tunylund/tiny-game-engine.git",
+    "typescript": "^3.9.3"
+  },
+  "author": "",
+  "license": "ISC"
+}
