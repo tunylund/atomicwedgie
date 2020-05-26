@@ -92,6 +92,10 @@ function beginConnection(): Promise<string> {
     connect('127.0.0.1:8888')
     on(ACTIONS.INIT, (id: string) => myId = id)
     on(ACTIONS.STATE_INIT, () => stateIsReady = true )
+    on(ACTIONS.INIT, () => {
+      const character = localStorage.getItem('character')
+      character && send('character', JSON.parse(character))
+    })
     on(ACTIONS.INIT, tryResolve)
     on(ACTIONS.STATE_INIT, tryResolve)
     on(ACTIONS.ERROR, reject)

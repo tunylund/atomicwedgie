@@ -19,6 +19,14 @@ export function addClient(id: string) {
   }
   on(id, ACTIONS.OPEN, () => addPlayer(id))
   on(id, ACTIONS.CLOSE, () => removePlayer(id))
+  on(id, 'character', ({name, color}: any) => {
+    const current = state<GameState>()
+    const player = current.players.find(p => p.id === id)
+    if (player) {
+      player.name = name
+      player.color = color
+    }
+  })
   on(id, 'input', (input: Input) => inputs.set(id, input))
   on(id, 'reset-attack', () => (inputs.get(id) || {resetAttack: false}).resetAttack = true)
 }
