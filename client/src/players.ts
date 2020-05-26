@@ -32,11 +32,7 @@ function drawPlayer({ id, pos, dir, effects }: Player, worldOffset: XYZ) {
   }
 }
 
-export function drawPlayers(myId: string, players: Player[], worldOffset: XYZ, shadowCaster: ShadowCaster) {
-  players
-    .filter(player => player.id === myId || getShadowOpacity(player.pos.cor, shadowCaster) > 0)
-    .map(player => drawPlayer(player, worldOffset))
-
+function drawBlueEffect(players: Player[], myId: string, worldOffset: XYZ) {
   const blueEffect = players
     .find(p => p.id === myId)?.effects
     .find(effect => effect.type === EffectType.Blue)
@@ -45,6 +41,43 @@ export function drawPlayers(myId: string, players: Player[], worldOffset: XYZ, s
       .filter(p => p.id !== myId)
       .map(player => drawTrail(blueEffect.duration, player.pos.cor, blue, worldOffset))
   }
+}
+
+function getFlags({pos, mode}: Player) {
+  const isMoving = pos.vel.size > 0
+  const isAttacking = [
+    Modes.BanzaiAttack,
+    Modes.WedgieAttackStand,
+    Modes.WedgieAttackWalk
+  ].includes(mode)
+  const isInBanzai = [
+    Modes.BanzaiAttack,
+    Modes.BanzaiStand,
+    Modes.BanzaiWalk
+  ].includes(mode)
+  const isDeadByBanzai =[
+    Modes.DeadByBanzai
+  ].includes(mode)
+  const isDead = [
+    Modes.DeadByBanzai,
+    Modes.DeadByWedgie,
+    Modes.DeadByWedgieWalk
+  ].includes(mode)
+  return { isMoving, isAttacking, isInBanzai, isDeadByBanzai, isDead }
+}
+
+function isVisible(player: Player, myId: string, shadowCaster: ShadowCaster) {
+  return player.id === myId
+    || getShadowOpacity(player.pos.cor, shadowCaster) > 0
+    || getFlags(player).isInBanzai
+}
+
+export function drawPlayers(myId: string, players: Player[], worldOffset: XYZ, shadowCaster: ShadowCaster) {
+  drawBlueEffect(players, myId, worldOffset)
+
+  players
+    .filter(player => isVisible(player, myId, shadowCaster))
+    .map(player => drawPlayer(player, worldOffset))
 }
 
 function determineEffectiveFrameSequence(mode: Modes, color: string): FrameSequence {
@@ -76,19 +109,16 @@ interface PlayerAnimation {
 }
 const playerAnimations = new Map<string, PlayerAnimation>()
 export function animatePlayers(players: Player[], step: number) {
-  players.map(({id, mode, modeCount, color}) => {
-    const animation = playerAnimations.get(id)
-    if (animation && animation.modeCount === modeCount) {
+  players.map(player => {
+    const animation = playerAnimations.get(player.id)
+
+    if (animation && animation.modeCount === player.modeCount) {
       animation.frameSequence.step(step)
-      if ([
-        Modes.BanzaiAttack,
-        Modes.WedgieAttackStand,
-        Modes.WedgieAttackWalk].includes(mode) &&
-        animation.frameSequence.finished) send('reset-attack')
+      if (getFlags(player).isAttacking && animation.frameSequence.finished) send('reset-attack')
     } else {
-      playerAnimations.set(id, {
-        modeCount,
-        frameSequence: determineEffectiveFrameSequence(mode, color)
+      playerAnimations.set(player.id, {
+        modeCount: player.modeCount,
+        frameSequence: determineEffectiveFrameSequence(player.mode, player.color)
       })
     }
   })

@@ -1,6 +1,6 @@
 import { getAsset } from './assets'
 import { fixedSizeDrawingLayer, draw, position, Entity, xyz, XYZ, zero, Layer, negone, mul } from 'tiny-game-engine/lib/index'
-import { isSolid, isShadowCasting } from './maps'
+import { isShadowCasting } from './maps'
 import { Map } from '../../types/types'
 
 interface Light extends Entity {
@@ -90,6 +90,7 @@ function drawEffectiveShadowCasters(lights: Light[], wallPolygons: Polygon[], wo
 function drawLightSources(lights: Light[]) {
   for (let {image, layer, dir} of lights) {
     draw((ctx, cw, ch) => {
+      ctx.clearRect(-cw, -ch, cw*2, ch*2)
       ctx.rotate(dir.radian)
       ctx.drawImage(image, 0, -image.height/2)
     }, undefined, layer)

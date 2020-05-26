@@ -29,6 +29,7 @@ function resetGame() {
   current.round = uuid()
   current.map = randomMap()
   current.players = []
+  current.insults = []
   current.scores = []
   current.clients.map(addPlayer)
   current.timeUntilEndGame = 60
@@ -52,8 +53,10 @@ function removePlayer(id: string) {
   if (current.players.length === 0 && stopGameLoop) stopGameLoop()
 }
 
-let stopGameLoop: () => void
+let stopGameLoop: (() => void)|undefined
 function startGameLoop() {
+  if (stopGameLoop) stopGameLoop()
+
   const stopLoop = loop((step, gameTime) => {
     let current = advanceTimers(state<GameState>(), step)
     if (current.timeUntilEndGame > 0) {
@@ -77,11 +80,13 @@ function advanceGame(current: GameState, step: number): GameState {
   current.players.map(player => {
     movePlayer(player, inputs.get(player.id), wallEntities, step)
     current.pills = tryToConsumePills(player, current.pills)
-    updateMode(player, inputs.get(player.id))
-    hitOtherPlayers(player, current.players)
+    updateMode(player, inputs.get(player.id), step)
+    hitOtherPlayers(player, current.players, current.scores, current.insults)
     advanceEffects(player, step)
     advanceDeathTimer(player, current.map, step)
   })
+  current.insults.map(insult => insult.life -= step)
+  current.insults = current.insults.filter(i => i.life > 0)
   return current
 }
 
@@ -92,7 +97,7 @@ function advanceTimers(current: GameState, step: number): GameState {
   const resultsAreVisible = current.timeUntilEndGame < current.timeUntilNextGame
   if (timeToSwitch) {
     if (resultsAreVisible) resetGame()
-    else current.timeUntilNextGame = 15
+    else current.timeUntilNextGame = 2
   }
   return current
 }
@@ -105,6 +110,7 @@ export const initialState: GameState = {
   timeUntilNextGame: 0,
   players: [],
   scores: [],
+  insults: [],
   pills: [],
   map: randomMap()
 }

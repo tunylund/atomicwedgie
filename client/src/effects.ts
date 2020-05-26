@@ -60,7 +60,7 @@ function trail(age: number): Particle[] {
   const fps = 60
   const increment = 1/3
   const times = age/fps + 1
-  const value = 8 / (increment * times)
+  const value = 4 / (increment * times)
   return [value]
 }
 
@@ -69,7 +69,7 @@ export function drawTrail(age: number, cor: XYZ, color: XYZ, worldOffset: XYZ) {
   draw((ctx: CanvasRenderingContext2D) => {
     ctx.translate(cor.x + worldOffset.x, cor.y + worldOffset.y)
     for (let radius of particles) {
-      const opacity = radius
+      const opacity = 0.5
       const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, radius)
       gradient.addColorStop(0, `rgba(${color.x}, ${color.y}, ${color.z}, ${opacity})`)
       gradient.addColorStop(0.5, `rgba(${color.x}, ${color.y}, ${color.z}, ${opacity})`)

@@ -90,7 +90,7 @@ export function isSolid(map: Map, x: number, y: number) {
 }
 
 export function randomMap(): Map {
-  return maps[2]// randomFrom(maps)
+  return randomFrom(maps)
 }
 
 export function getSpawnPoint({tiles, tileSize}: Map): XYZ {

@@ -21,7 +21,7 @@ export interface Player extends Entity {
   mode: Modes
   modeCount: number
   deathTimeout: number
-  isFreshAttack: boolean
+  attackDuration: number
   effects: {id: string, type: EffectType, duration: number}[]
 }
 
@@ -40,6 +40,7 @@ export interface GameState extends State {
   timeUntilEndGame: number
   timeUntilNextGame: number
   scores: Score[]
+  insults: Insult[]
 }
 
 export const enum EffectType {
@@ -56,6 +57,14 @@ export interface Effect {
   color: XYZ
   value: number
   speed: number
+}
+
+export interface Insult {
+  text: string
+  quote: string
+  target: string
+  targetName: string
+  life: number
 }
 
 export interface Score {

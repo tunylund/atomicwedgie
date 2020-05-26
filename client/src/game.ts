@@ -31,7 +31,7 @@ export function startDrawingGame(myId: string) {
   })
 
   const stopDrawLoop = loop((step, gameTime) => {
-    const { map, players, pills, timeUntilEndGame, timeUntilNextGame, scores } = state<GameState>()
+    const { map, players, pills, timeUntilEndGame, timeUntilNextGame, scores, insults } = state<GameState>()
 
     const protagonist = players.find(p => p.id === myId)
     const protagonistPos = protagonist?.pos.cor || zero
@@ -45,7 +45,7 @@ export function startDrawingGame(myId: string) {
     drawPills(pills, offset, shadowCaster)
     drawPlayers(myId, players, offset, shadowCaster)
     drawShadows(shadowCaster, offset)
-    drawHud(timeUntilEndGame, scores, myId)
+    drawHud(timeUntilEndGame, scores, myId, insults)
     tryDrawResults(timeUntilNextGame, scores)
   })
 

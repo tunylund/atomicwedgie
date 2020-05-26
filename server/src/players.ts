@@ -1,15 +1,17 @@
 import { getSpawnPoint } from "./maps";
 import { position, xyz, vector, move, vectorTo, zero, bump, Entity, distance, isAt, intersects, mul } from "tiny-game-engine";
-import { Player, Map, Modes, Score, GameState, EffectType } from "../../types/types";
+import { Player, Map, Modes, Score, GameState, EffectType, Insult } from "../../types/types";
+import { banzaid, quote, wedgied } from "./texts";
 
 const turnSpeed = 6,
       walkSpeed = 100,
       banzaiWalkSpeed = 70,
       banzaiDistance = 48,
       wedgieDistance = 32,
-      banzaiAngle = 90,
-      banzaidDuration = 3500,
-      wedgiedDuration = 3500
+      minDistance = 12,
+      banzaiAngle = 45,
+      banzaidDuration = 5,
+      wedgiedDuration = 4
 
 export function buildScore({ id, name }: Player): Score {
   return {
@@ -62,49 +64,76 @@ export function movePlayer(player: Player, input: Input = defaultInput, walls: E
   }
 }
 
-export function updateMode(player: Player, input: Input = defaultInput) {
-  const { isAttacking } = getFlags(player)
+export function updateMode(player: Player, input: Input = defaultInput, step: number) {
+  if (getFlags(player).isAttacking) player.attackDuration += step
   const mode = determineMode(player, input)
   if (mode !== player.mode) {
     player.mode = mode
     player.modeCount++
-    player.isFreshAttack = !isAttacking && getFlags(player).isAttacking
+    if (getFlags(player).isAttacking) player.attackDuration = 0
   }
 
   input.attack = false
   input.banzaiSwich = false
 }
 
-export function hitOtherPlayers(player: Player, players: Player[]) {
+export function hitOtherPlayers(player: Player, players: Player[], scores: Score[], insults: Insult[]) {
   const { isAttacking, isInBanzai } = getFlags(player)
-  if (player.isFreshAttack && isAttacking) {
+  if (isAttacking && player.attackDuration < 1) {
     if (isInBanzai) {
-      players
-        .filter(other => {
+      if (player.attackDuration > 0.375) {
+        players.filter(other => (
           other.id !== player.id
           && !getFlags(other).isDead
-          && !other.effects.find(fx => fx.type == EffectType.Red)
-          && vectorTo(player, other).angle - player.dir.angle < banzaiAngle
+          && !getFlags(other).isInvincible
+          && Math.abs(vectorTo(player, other).angle - player.dir.angle) < banzaiAngle
           && distance(player, other) <= banzaiDistance
-        })
-        .map(other => {
+          && distance(player, other) > minDistance
+        )).map(other => {
           other.deathTimeout = banzaidDuration
           other.mode = Modes.DeadByBanzai
           other.modeCount++
+          scores.filter(s => s.id = other.id).map(s => s.banzaidCount++ )
+          scores.filter(s => s.id = player.id).map(s => {
+            s.banzaiCount++
+            s.score += 2
+          })
+          insults.push({
+            target: other.id,
+            targetName: other.name,
+            text: banzaid(player.name),
+            quote: quote(),
+            life: 5
+          })
         })
+        player.attackDuration = 2
+      }
     } else {
-      players
-        .filter(other => {
-          other.id !== player.id
-          && !getFlags(other).isDead
-          && vectorTo(player, other).angle - player.dir.angle < banzaiAngle
-          && distance(player, other) <= wedgieDistance
+      players.filter(other => (
+        other.id !== player.id
+        && !getFlags(other).isDead
+        && Math.abs(vectorTo(player, other).angle - player.dir.angle) < banzaiAngle
+        && Math.abs(player.dir.angle - other.dir.angle) < banzaiAngle
+        && distance(player, other) <= wedgieDistance
+        && distance(player, other) > minDistance
+      )).map(other => {
+        other.deathTimeout = wedgiedDuration
+        other.mode = Modes.DeadByWedgie
+        other.modeCount++
+        scores.filter(s => s.id = other.id).map(s => s.wedgiedCount++ )
+        scores.filter(s => s.id = player.id).map(s => {
+          s.wedgieCount++
+          s.score += 5
         })
-        .map(other => {
-          other.deathTimeout = wedgiedDuration
-          other.mode = Modes.DeadByWedgie
-          other.modeCount++
+        insults.push({
+          target: other.id,
+          targetName: other.name,
+          text: wedgied(player.name),
+          quote: quote(),
+          life: 5
         })
+      })
+      player.attackDuration = 2
     }
   }
 }
@@ -137,7 +166,7 @@ export function resetPlayer(player: Partial<Player>, map: Map): Player {
   } as Player
 }
 
-function getFlags({pos, mode}: Player) {
+function getFlags({pos, mode, effects, deathTimeout}: Player) {
   const isMoving = pos.vel.size > 0
   const isAttacking = [
     Modes.BanzaiAttack,
@@ -152,12 +181,9 @@ function getFlags({pos, mode}: Player) {
   const isDeadByBanzai =[
     Modes.DeadByBanzai
   ].includes(mode)
-  const isDead = [
-    Modes.DeadByBanzai,
-    Modes.DeadByWedgie,
-    Modes.DeadByWedgieWalk
-  ].includes(mode)
-  return { isMoving, isAttacking, isInBanzai, isDeadByBanzai, isDead }
+  const isDead = deathTimeout > 0
+  const isInvincible = !!effects.find(fx => fx.type == EffectType.Red)
+  return { isMoving, isAttacking, isInBanzai, isDeadByBanzai, isDead, isInvincible }
 }
 
 function determineMode(player: Player, {attack, banzaiSwich, resetAttack}: Input): Modes {

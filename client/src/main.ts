@@ -40,14 +40,14 @@ function showConnectionMessage() {
 }
 
 function showError(error: Error) {
+  console.error(error)
   return loop((step, gameTime) => {
     draw((ctx, cw, ch) => {
-      ctx.fillStyle = '#222'
-      ctx.fillRect(-cw, -ch, 2*cw, 2*ch)
-      const text = `failed :( ${error}`
-      ctx.fillStyle = 'white'
+      const text = `connectivity issues... :( ${error.message}`
       ctx.font = '16px Arial'
-      ctx.fillText(text, -ctx.measureText(text).width/2, 0)
+      const tw = ctx.measureText(text).width      
+      ctx.fillStyle = 'white'
+      ctx.fillText(text, -tw/2, 24)
     })
   })
 }
@@ -58,10 +58,14 @@ export default async function createGame() {
     const myId = await beginConnection()
     stopConnectMessage()
     startDrawingGame(myId)
-  
-    on(ACTIONS.ERROR, (error: any) => {
-      console.error(error)
-    })
+
+    let hideError: (() => void)|null
+    function onErrorChange(error?: Error) {
+      if (hideError) hideError()
+      if (error) hideError = showError(error)
+    }
+    on(ACTIONS.ERROR, onErrorChange)
+    on(ACTIONS.STATE_UPDATE, () => onErrorChange())
 
     buildControls(window, (controls: Controls) => {
       send('input', {

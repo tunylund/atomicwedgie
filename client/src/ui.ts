@@ -1,11 +1,11 @@
 import { draw } from 'tiny-game-engine/lib/index'
-import { Score } from '../../types/types'
+import { Score, Insult } from '../../types/types'
 
 function drawTime(timeUntilEndGame: number) {
   draw((ctx, cw, ch) => {
     ctx.font = '12px Arial'
     ctx.fillStyle = 'white'
-    ctx.fillText(`time: ${Math.max(Math.floor(timeUntilEndGame), 0)}`, -cw + 15, -ch + 25)
+    ctx.fillText(`time left: ${Math.max(Math.floor(timeUntilEndGame), 0)}`, -cw + 15, -ch + 25)
   })
 }
 
@@ -25,7 +25,28 @@ function drawCurrentScore(scores: Score[], myId: string) {
   })
 }
 
-export function drawHud(timeUntilEndGame: number, scores: Score[], myId: string) {
+function drawInsults(insults: Insult[], myId: string) {
+  insults.filter(i => i.target === myId).map(({text, quote}) => {
+    draw((ctx, cw, ch) => {
+      ctx.font = '18px Arial'
+      ctx.fillStyle = 'red'
+      ctx.fillText(text, -ctx.measureText(text).width/2, 0)
+      ctx.font = 'italic 14px Arial'
+      ctx.fillStyle = 'white'
+      ctx.fillText(quote, -ctx.measureText(quote).width/2, 24)
+    })
+  })
+  insults.filter(i => i.target !== myId).map(({text, targetName}, ix) => {
+    draw((ctx, cw, ch) => {
+      ctx.font = '14px Arial'
+      ctx.fillStyle = 'white'
+      ctx.fillText(text.replace(/you/ig, targetName), -cw + 20, ch - ix * 16 - 20)
+    })
+  })
+}
+
+export function drawHud(timeUntilEndGame: number, scores: Score[], myId: string, insults: Insult[]) {
   drawTime(timeUntilEndGame)
   drawCurrentScore(scores, myId)
+  drawInsults(insults, myId)
 }
