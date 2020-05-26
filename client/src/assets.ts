@@ -51,39 +51,39 @@ enum Asset {
   car2 = 'img/decorations/auto2.gif',
   tree1 = 'img/decorations/puu2.gif',
 
-  // walk1 = 'sounds/walk/2.wav',
-  // walk2 = 'sounds/walk/4.wav',
-  // walk3 = 'sounds/walk/5.wav',
+  [`walk-1`] = 'sounds/walk/2.wav',
+  [`walk-2`] = 'sounds/walk/4.wav',
+  [`walk-3`] = 'sounds/walk/5.wav',
 
-  // pill1 = 'sounds/pills/1.wav',
-  // pill2 = 'sounds/pills/2.wav',
-  // pill3 = 'sounds/pills/3.wav',
-  // uliuliuli = 'sounds/uliuliuli/3.wav',
+  [`pill-1`] = 'sounds/pills/1.wav',
+  [`pill-2`] = 'sounds/pills/2.wav',
+  [`pill-3`] = 'sounds/pills/3.wav',
+  uliuliuli = 'sounds/uliuliuli/3.wav',
 
-  // performWedgie1 = 'sounds/perform-wedgie/1.wav',
-  // performWedgie2 = 'sounds/perform-wedgie/2.wav',
-  // performWedgie3 = 'sounds/perform-wedgie/3.wav',
-  // performWedgie4 = 'sounds/perform-wedgie/4.wav',
+  [`performWedgie-1`] = 'sounds/perform-wedgie/1.wav',
+  [`performWedgie-2`] = 'sounds/perform-wedgie/2.wav',
+  [`performWedgie-3`] = 'sounds/perform-wedgie/3.wav',
+  [`performWedgie-4`] = 'sounds/perform-wedgie/4.wav',
 
-  // performBanzai1 = 'sounds/perform-banzai/1.wav',
-  // performBanzai2 = 'sounds/perform-banzai/2.wav',
-  // performBanzai3 = 'sounds/perform-banzai/3.wav',
+  [`performBanzai-1`] = 'sounds/perform-banzai/1.wav',
+  [`performBanzai-2`] = 'sounds/perform-banzai/2.wav',
+  [`performBanzai-3`] = 'sounds/perform-banzai/3.wav',
 
-  // banzaiScream1 = 'sounds/banzai-scream/1.wav',
-  // banzaiScream2 = 'sounds/banzai-scream/2.wav',
-  // banzaiScream3 = 'sounds/banzai-scream/3.wav',
+  [`banzaiScream-1`] = 'sounds/banzai-scream/1.wav',
+  [`banzaiScream-2`] = 'sounds/banzai-scream/2.wav',
+  [`banzaiScream-3`] = 'sounds/banzai-scream/3.wav',
 
-  // laugh1 = 'sounds/laugh/1.wav',
-  // laugh2 = 'sounds/laugh/2.wav',
-  // laugh3 = 'sounds/laugh/3.wav',
-  // laugh4 = 'sounds/laugh/4.wav',
-  // laugh5 = 'sounds/laugh/5.wav',
-  // laugh6 = 'sounds/laugh/6.wav',
+  [`laugh-1`] = 'sounds/laugh/1.wav',
+  [`laugh-2`] = 'sounds/laugh/2.wav',
+  [`laugh-3`] = 'sounds/laugh/3.wav',
+  [`laugh-4`] = 'sounds/laugh/4.wav',
+  [`laugh-5`] = 'sounds/laugh/5.wav',
+  [`laugh-6`] = 'sounds/laugh/6.wav',
 
-  // arrgh1 = 'sounds/arrgh/1.wav',
-  // arrgh2 = 'sounds/arrgh/2.wav',
-  // arrgh3 = 'sounds/arrgh/3.wav',
-  // arrgh4 = 'sounds/arrgh/4.wav'
+  [`arrgh-1`] = 'sounds/arrgh/1.wav',
+  [`arrgh-2`] = 'sounds/arrgh/2.wav',
+  [`arrgh-3`] = 'sounds/arrgh/3.wav',
+  [`arrgh-4`] = 'sounds/arrgh/4.wav'
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {
@@ -97,17 +97,19 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 const audioCtx = new AudioContext()
-function loadSound(url: string): Promise<AudioBufferSourceNode> {
+export type AudioBuilder = () => AudioBufferSourceNode
+function loadSound(url: string): Promise<AudioBuilder> {
   return fetch(url)
     .then(response => response.arrayBuffer())
-    .then(buffer => {
-      const source = audioCtx.createBufferSource()
-      audioCtx.decodeAudioData(buffer, function(decodedData) {
-        source.buffer = decodedData
+    .then(buffer => audioCtx.decodeAudioData(buffer))
+    .then(audioBuffer => {
+      return () => {
+        const source = audioCtx.createBufferSource()
+        source.buffer = audioBuffer
         source.connect(audioCtx.destination)
-      })
-      return source
-  })
+        return source
+      }
+    })
 }
 
 function load(key: string, url: string): Promise<any> {
@@ -130,10 +132,12 @@ function preload(onAssetReady: (ready: number, expected: number) => void) {
   return Promise.all(promises)
 }
 
-function getAsset<T extends HTMLImageElement | AudioBufferSourceNode>(asset: AssetKey): T {
+function getAsset<T extends HTMLImageElement | AudioBuilder>(asset: AssetKey): T {
   const r = assets.get(asset)
   if (r === undefined) throw new Error(`asset ${asset} is not available`)
   else return r as T
 }
+// @ts-ignore
+window.getAsset = getAsset
 
 export { preload, getAsset, AssetKey }

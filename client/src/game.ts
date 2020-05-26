@@ -7,6 +7,7 @@ import { drawPills } from './pills'
 import { GameState, Player, Score } from '../../types/types'
 import { state, ACTIONS, on } from 'shared-state-client/dist/index'
 import { drawScores } from './results'
+import { playMode, playSteps } from './sounds'
 
 function centerMapOrPlayerOrBindToEdge(availableSpace: number, mapSize: number, playerPos: number) {
   const mapFitsOnScreen = availableSpace > mapSize
@@ -20,14 +21,17 @@ function centerMapOrPlayerOrBindToEdge(availableSpace: number, mapSize: number, 
 
 export function startDrawingGame(myId: string) {
   let shadowCaster: ShadowCaster
-  on(ACTIONS.INIT, (id: string) => myId = id )
+  on(ACTIONS.INIT, (id: string) => myId = id)
 
   const stopAnimationLoop = loop((step) => {
-    const { players, map, round } = state<GameState>()
+    const current = state<GameState>()
+    const { players, map, round } = current
     const protagonist = players.find(p => p.id === myId)
     if (shadowCaster?.round !== round) shadowCaster = buildShadowCaster(map, round)
     makeLightsFollowPlayer(shadowCaster, protagonist)
     animatePlayers(players, step)
+    players.map(player => playMode(player, myId))
+    if (protagonist) playSteps(protagonist, players)
   })
 
   const stopDrawLoop = loop((step, gameTime) => {

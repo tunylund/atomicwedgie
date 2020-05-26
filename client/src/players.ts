@@ -43,7 +43,7 @@ function drawBlueEffect(players: Player[], myId: string, worldOffset: XYZ) {
   }
 }
 
-function getFlags({pos, mode}: Player) {
+export function getFlags({pos, mode}: Player) {
   const isMoving = pos.vel.size > 0
   const isAttacking = [
     Modes.BanzaiAttack,
@@ -58,12 +58,16 @@ function getFlags({pos, mode}: Player) {
   const isDeadByBanzai =[
     Modes.DeadByBanzai
   ].includes(mode)
+  const isDeadByWedgie = [
+    Modes.DeadByWedgie,
+    Modes.DeadByWedgieWalk
+  ].includes(mode)
   const isDead = [
     Modes.DeadByBanzai,
     Modes.DeadByWedgie,
     Modes.DeadByWedgieWalk
   ].includes(mode)
-  return { isMoving, isAttacking, isInBanzai, isDeadByBanzai, isDead }
+  return { isMoving, isAttacking, isInBanzai, isDeadByBanzai, isDeadByWedgie, isDead }
 }
 
 function isVisible(player: Player, myId: string, shadowCaster: ShadowCaster) {
