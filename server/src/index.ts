@@ -1,11 +1,30 @@
 import http from 'http'
+import urlParser from 'url'
 import { start } from 'shared-state-server'
-import { initialState, addClient } from './game'
+import { initialState, addClient, status } from './game'
 
 const port = process.env.PORT || 8888
-// const staticServer = new nodeStatic.Server('./client/', { cache: 0 }) // no cache
 
-const httpServer = http.createServer((req, res) => {})
+const httpServer = http.createServer((req, res) => {
+  const url = urlParser.parse(req.url || ''),
+      parts = url.pathname?.split("/") || [],
+      part = parts.find(x => x !== '') || 'index.html'
+
+  switch(part) {
+
+    case "status":
+      res.setHeader('Cache-Control', 'no-cache')
+      res.writeHead(200, { 'Content-type': 'application/json' })
+      res.end(JSON.stringify(status()))
+      break
+
+    default:
+      res.writeHead(404)
+      res.end()
+      break
+
+  }
+})
 
 const iceServers = [
   // {

@@ -40,6 +40,7 @@ function resetGame() {
   current.insults = []
   current.scores = []
   current.clients.map(addPlayer)
+  current.startTime = Date.now()
   current.timeUntilEndGame = 60
   wallEntities = buildWalls(current.map)
   update(current)
@@ -114,6 +115,7 @@ export const initialState: GameState = {
   round: '',
   clients: [],
   lagStatistics: {},
+  startTime: 0,
   timeUntilEndGame: 60,
   timeUntilNextGame: 0,
   players: [],
@@ -121,4 +123,12 @@ export const initialState: GameState = {
   insults: [],
   pills: [],
   map: randomMap()
+}
+
+export function status() {
+  const current = state<GameState>()
+  return {
+    players: current.players.map(p => {color: p.color}),
+    startTime: current.startTime
+  }
 }
