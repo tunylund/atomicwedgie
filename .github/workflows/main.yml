@@ -3,7 +3,7 @@ on:
   push:
     branches: [ master ]
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -21,6 +21,8 @@ jobs:
         restore-keys: |
           ${{ runner.OS }}-node-
           ${{ runner.OS }}-
+    - run: npm ci
+      working-directory: types
     - run: npm ci
     - run: npm run build
     - run: npm prune --production
