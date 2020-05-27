@@ -32,6 +32,7 @@ mkdir -p deploy/node_modules
 cp -R dist ./deploy
 cp -R css ./deploy
 cp -R js ./deploy
+cp -R img ./deploy
 cp -R sounds ./deploy
 cp -R node_modules/tiny-game-engine ./deploy/node_modules
 cp -R node_modules/shared-state-client ./deploy/node_modules
