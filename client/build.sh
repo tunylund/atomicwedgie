@@ -28,4 +28,14 @@ for f in `find dist -name '*.js'`; do
 done
 rm dist/*.bak
 
+mkdir -p deploy/node_modules
+cp -R dist ./deploy
+cp -R css ./deploy
+cp -R js ./deploy
+cp -R sounds ./deploy
+cp -R node_modules/tiny-game-engine ./deploy/node_modules
+cp -R node_modules/shared-state-client ./deploy/node_modules
+cp -R node_modules/socket.io-client ./deploy/node_modules
+cp -R ./*.{png,ico,html} ./deploy
+
 echo "built happily 🐶"
