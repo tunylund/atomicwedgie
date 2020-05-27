@@ -36,6 +36,8 @@ cp -R sounds ./deploy
 cp -R node_modules/tiny-game-engine ./deploy/node_modules
 cp -R node_modules/shared-state-client ./deploy/node_modules
 cp -R node_modules/socket.io-client ./deploy/node_modules
-cp -R ./*.{png,ico,html} ./deploy
+cp -R ./*.png ./deploy
+cp -R ./*.ico ./deploy
+cp -R ./*.html ./deploy
 
 echo "built happily 🐶"
