@@ -12,7 +12,7 @@
     "start": "http-server ."
   },
   "dependencies": {
-    "shared-state-client": "^0.1.0",
+    "shared-state-client": "^0.1.2",
     "socket.io-client": "^2.3.0",
     "tiny-game-engine": "tunylund/tiny-game-engine"
   },

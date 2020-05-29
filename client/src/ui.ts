@@ -1,11 +1,24 @@
 import { draw } from 'tiny-game-engine/lib/index'
-import { Score, Insult } from '../../types/types'
+import { Score, Insult, Player } from '../../types/types'
 
 function drawTime(timeUntilEndGame: number) {
   draw((ctx, cw, ch) => {
     ctx.font = '12px Arial'
     ctx.fillStyle = 'white'
     ctx.fillText(`time left: ${Math.max(Math.floor(timeUntilEndGame), 0)}`, -cw + 15, -ch + 25)
+  })
+}
+
+function drawLagStatistics(lagStatistics: {}, players: Player[], myId: string) {
+  draw((ctx, cw, ch) => {
+    ctx.font = '12px Arial'
+    ctx.fillStyle = 'white'
+    ctx.fillText(`lag statistics:`, -cw + 15, -ch + 55)
+    Object.entries(lagStatistics).map(([id, lag], ix) => {
+      const name = players.find(p => p.id === id)?.name || '--unknown--'
+      ctx.fillStyle = id === myId ? 'white' : 'hsl(0,0%,75%)'
+      ctx.fillText(`${name}: ${lag}ms`, -cw + 15, -ch + 75 + 20 * ix)
+    })
   })
 }
 
@@ -45,8 +58,9 @@ function drawInsults(insults: Insult[], myId: string) {
   })
 }
 
-export function drawHud(timeUntilEndGame: number, scores: Score[], myId: string, insults: Insult[]) {
+export function drawHud(timeUntilEndGame: number, scores: Score[], myId: string, insults: Insult[], lagStatistics: {}, players: Player[]) {
   drawTime(timeUntilEndGame)
+  drawLagStatistics(lagStatistics, players, myId)
   drawCurrentScore(scores, myId)
   drawInsults(insults, myId)
 }

@@ -29,16 +29,19 @@ done
 rm dist/*.bak
 
 mkdir -p deploy/node_modules
-cp -R dist ./deploy
-cp -R css ./deploy
-cp -R js ./deploy
-cp -R img ./deploy
-cp -R sounds ./deploy
-cp -R node_modules/tiny-game-engine ./deploy/node_modules
-cp -R node_modules/shared-state-client ./deploy/node_modules
-cp -R node_modules/socket.io-client ./deploy/node_modules
-cp -R ./*.png ./deploy
-cp -R ./*.ico ./deploy
-cp -R ./*.html ./deploy
+cp -pR dist ./deploy
+cp -pR css ./deploy
+cp -pR js ./deploy
+cp -pR img ./deploy
+cp -pR sounds ./deploy
+cp -pR node_modules/tiny-game-engine ./deploy/node_modules
+cp -pR node_modules/shared-state-client ./deploy/node_modules
+cp -pR node_modules/socket.io-client ./deploy/node_modules
+rm -rf ./deploy/node_modules/tiny-game-engine/node_modules
+rm -rf ./deploy/node_modules/shared-state-client/node_modules
+rm -rf ./deploy/node_modules/socket.io-client/node_modules
+cp -pR ./*.png ./deploy
+cp -pR ./*.ico ./deploy
+cp -pR ./*.html ./deploy
 
 echo "built happily 🐶"

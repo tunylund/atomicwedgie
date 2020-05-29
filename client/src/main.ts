@@ -43,7 +43,9 @@ function showError(error: Error) {
   console.error(error)
   return loop((step, gameTime) => {
     draw((ctx, cw, ch) => {
-      const text = `connectivity issues... :( ${error.message}`
+      const msg = error?.message ? error?.message : error
+      const support = msg == 'timeout' ? ' ...sometimes reloading helps...' : ''
+      const text = `connectivity issues... :( ${msg}${support}`
       ctx.font = '16px Arial'
       const tw = ctx.measureText(text).width      
       ctx.fillStyle = 'white'
@@ -54,8 +56,11 @@ function showError(error: Error) {
 export default async function createGame() {
   await loadAssets()
   try {
+    // const host = 'atomicwedgie-75e1caed09f47d29.elb.eu-west-1.amazonaws.com:8888'
+    const host = 'ec2-52-215-35-51.eu-west-1.compute.amazonaws.com:8888'
+    // const host = 'localhost:8888'
     const stopConnectMessage = showConnectionMessage()
-    const myId = await beginConnection()
+    const myId = await beginConnection(host)
     stopConnectMessage()
     startDrawingGame(myId)
 
@@ -65,6 +70,7 @@ export default async function createGame() {
       if (error) hideError = showError(error)
     }
     on(ACTIONS.ERROR, onErrorChange)
+    on(ACTIONS.CLOSE, onErrorChange)
     on(ACTIONS.STATE_UPDATE, () => onErrorChange())
 
     buildControls(window, (controls: Controls) => {
@@ -82,14 +88,32 @@ export default async function createGame() {
   }
 }
 
-function beginConnection(): Promise<string> {
+function beginConnection(host: string): Promise<string> {
   let myId: string, stateIsReady: boolean
   
   return new Promise((resolve, reject) => {
     function tryResolve() {
       if (myId && stateIsReady) resolve(myId)
     }
-    connect('127.0.0.1:8888')
+    connect(host, {
+      iceServers: [{
+        "urls": "stun:global.stun.twilio.com:3478?transport=udp"
+      },  {
+        "username": "2f0e8144029624228d60e5e453efc2ec0dbe71e185559eeed36abf152a06faf1",
+        "urls": "turn:global.turn.twilio.com:3478?transport=udp",
+        "credential": "XdgWiiLovT8horNRBUSN5ffSv+v/u8uDWe7CmKnB9E0="
+      },
+      {
+        "username": "2f0e8144029624228d60e5e453efc2ec0dbe71e185559eeed36abf152a06faf1",
+        "urls": "turn:global.turn.twilio.com:3478?transport=tcp",
+        "credential": "XdgWiiLovT8horNRBUSN5ffSv+v/u8uDWe7CmKnB9E0="
+      },
+      {
+        "username": "2f0e8144029624228d60e5e453efc2ec0dbe71e185559eeed36abf152a06faf1",
+        "urls": "turn:global.turn.twilio.com:443?transport=tcp",
+        "credential": "XdgWiiLovT8horNRBUSN5ffSv+v/u8uDWe7CmKnB9E0="
+      }],
+    })
     on(ACTIONS.INIT, (id: string) => myId = id)
     on(ACTIONS.STATE_INIT, () => stateIsReady = true )
     on(ACTIONS.INIT, () => {
