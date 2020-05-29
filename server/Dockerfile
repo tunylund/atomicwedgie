@@ -1,9 +1,11 @@
-FROM node:14.3.0-alpine3.10 as runtime
-RUN apk add --update git openssh gcompat libc6-compat
-WORKDIR '/usr/atomic-wedgie'
+FROM node:14.3.0-stretch-slim
+RUN apt-get update
+RUN apt-get --assume-yes install git
+WORKDIR '/usr/atomicwedgie'
 COPY package.json .
 COPY package-lock.json .
 RUN npm ci --production
+COPY .env .
 COPY dist ./dist
 EXPOSE 8888
 ENTRYPOINT ["node","dist/index.mjs"]

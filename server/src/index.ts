@@ -2,6 +2,7 @@ import http from 'http'
 import urlParser from 'url'
 import { start } from 'shared-state-server'
 import { initialState, addClient, status } from './game'
+import { readFileSync } from 'fs'
 
 const port = process.env.PORT || 8888
 
@@ -20,38 +21,16 @@ const httpServer = http.createServer((req, res) => {
 
     default:
       res.writeHead(404)
-      res.end()
+      res.end('404')
       break
 
   }
 })
 
-const iceServers = [
-  // {
-  //   "url": "stun:global.stun.twilio.com:3478?transport=udp",
-  //   "urls": "stun:global.stun.twilio.com:3478?transport=udp"
-  // },
-  // {
-  //   "url": "turn:global.turn.twilio.com:3478?transport=udp",
-  //   "username": "c266100c5eee1a508d2fa0d668706789cdf64f34f800d4401fd695e2041e2628",
-  //   "urls": "turn:global.turn.twilio.com:3478?transport=udp",
-  //   "credential": "ldXXP3Q9oZKxdO36x6YUmoTO4eNe3LHM4gR00MGLcG0="
-  // },
-  // {
-  //   "url": "turn:global.turn.twilio.com:3478?transport=tcp",
-  //   "username": "c266100c5eee1a508d2fa0d668706789cdf64f34f800d4401fd695e2041e2628",
-  //   "urls": "turn:global.turn.twilio.com:3478?transport=tcp",
-  //   "credential": "ldXXP3Q9oZKxdO36x6YUmoTO4eNe3LHM4gR00MGLcG0="
-  // },
-  // {
-  //   "url": "turn:global.turn.twilio.com:443?transport=tcp",
-  //   "username": "c266100c5eee1a508d2fa0d668706789cdf64f34f800d4401fd695e2041e2628",
-  //   "urls": "turn:global.turn.twilio.com:443?transport=tcp",
-  //   "credential": "ldXXP3Q9oZKxdO36x6YUmoTO4eNe3LHM4gR00MGLcG0="
-  // }
-]
+const iceServers = JSON.parse(readFileSync('.env', 'utf8'))
+console.log(`using iceServers: ${iceServers}`)
 
-start(httpServer, initialState, addClient)
+start(httpServer, initialState, addClient, { iceServers })
 
 httpServer.listen(port)
 console.log(`Server running at http://127.0.0.1:${port}/`)
