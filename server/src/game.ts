@@ -1,6 +1,6 @@
 import { GameState } from '../../types/types'
 import { loop, Entity } from 'tiny-game-engine'
-import { update, state, off, on, ACTIONS } from 'shared-state-server'
+import { update, state, off, on, ACTIONS, broadcast } from 'shared-state-server'
 import { randomMap, buildWalls } from './maps'
 import { tryToCreatePill, tryToConsumePills } from './pills'
 import { resetPlayer, buildScore, Input, advanceEffects, movePlayer, advanceDeathTimer, updateMode, hitOtherPlayers } from './players'
@@ -26,6 +26,7 @@ export function addClient(id: string) {
       player.name = name
       player.color = color
     }
+    update(current)
   })
   on(id, 'input', (input: Input) => inputs.set(id, input))
   on(id, 'reset-attack', () => (inputs.get(id) || {resetAttack: false}).resetAttack = true)
@@ -75,7 +76,10 @@ function startGameLoop() {
     requestAnimationFrame: setImmediate,
     cancelAnimationFrame: clearImmediate
   })
-  const updateInterval = setInterval(() => update(state()), 1000/60)
+
+  const updateInterval = setInterval(() => {
+    update(state())
+  }, 1000/60)
 
   stopGameLoop = () => {
     stopLoop()
@@ -106,7 +110,7 @@ function advanceTimers(current: GameState, step: number): GameState {
   const resultsAreVisible = current.timeUntilEndGame < current.timeUntilNextGame
   if (timeToSwitch) {
     if (resultsAreVisible) resetGame()
-    else current.timeUntilNextGame = 2
+    else current.timeUntilNextGame = 15
   }
   return current
 }
@@ -128,7 +132,7 @@ export const initialState: GameState = {
 export function status() {
   const current = state<GameState>()
   return {
-    players: current.players.map(p => {color: p.color}),
+    players: current.players.map(p => ({color: p.color})),
     startTime: current.startTime
   }
 }

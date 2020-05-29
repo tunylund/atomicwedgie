@@ -14,6 +14,8 @@ const httpServer = http.createServer((req, res) => {
   switch(part) {
 
     case "status":
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      res.setHeader('Access-Control-Allow-Methods', ['GET', 'OPTIONS'])
       res.setHeader('Cache-Control', 'no-cache')
       res.writeHead(200, { 'Content-type': 'application/json' })
       res.end(JSON.stringify(status()))
