@@ -1,6 +1,6 @@
 .venv
 node_modules
 dist
-deploy
+.deploy
 .env
 **/*.tsbuildinfo

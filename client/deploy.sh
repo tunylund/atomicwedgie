@@ -3,7 +3,7 @@ set -e
 
 ./build.sh
 
-SOURCE_DIR="deploy"
+SOURCE_DIR=".deploy"
 AWS_S3_BUCKET="atomicwedgie"
 DEST_DIR=""
 

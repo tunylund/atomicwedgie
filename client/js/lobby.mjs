@@ -2,13 +2,12 @@ const q = document.querySelector.bind(document)
 
 function showTakenPlayers(players) {
   document.querySelectorAll('[name=color]').forEach(el => {
-    el.disabled = false
     el.parentNode.classList.remove('taken')
   })
   players
+    .filter(p => !!p)
     .map(player => q(`[name=color][value=${player.color}]`))
     .forEach(el => {
-      el.disabled = true
       el.checked = false
       el.parentNode.classList.add('taken')
     })
@@ -44,7 +43,9 @@ function joinGame() {
     name: q("[name=name]").value
   }))
   
-  window.location = "game.html"
+  const currentUrl = new URL(location.toString())
+  const host = currentUrl.searchParams.get('host') || currentUrl.host
+  window.location = "game.html?host=" + host
 }
 
 function selectPreviouslySelectedColor() {
@@ -60,7 +61,9 @@ function selectPreviouslySelectedColor() {
 
 async function refreshGameState() {
   try {
-    const response = await fetch('/status')
+    const currentUrl = new URL(location.toString())
+    const host = currentUrl.searchParams.get('host') || currentUrl.host
+    const response = await fetch(`${currentUrl.protocol}//${host}/status`, {mode: 'cors'})
     const status = await response.json()
     showTakenPlayers(status.players)
     showGameTime(status.startTime)

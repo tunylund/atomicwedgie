@@ -1,4 +1,4 @@
-import { connect, on, ACTIONS, send } from 'shared-state-client/dist/index'
+import { connect, on, ACTIONS, send, state } from 'shared-state-client/dist/index'
 import { preload } from './assets'
 import { startDrawingGame } from './game'
 import { buildControls, Controls, draw, loop } from 'tiny-game-engine/lib/index'
@@ -56,9 +56,8 @@ function showError(error: Error) {
 export default async function createGame() {
   await loadAssets()
   try {
-    // const host = 'atomicwedgie-75e1caed09f47d29.elb.eu-west-1.amazonaws.com:8888'
-    const host = 'ec2-52-215-35-51.eu-west-1.compute.amazonaws.com:8888'
-    // const host = 'localhost:8888'
+    const currentUrl = new URL(location.toString())
+    const host = currentUrl.searchParams.get('host') || currentUrl.host
     const stopConnectMessage = showConnectionMessage()
     const myId = await beginConnection(host)
     stopConnectMessage()
@@ -72,7 +71,7 @@ export default async function createGame() {
     on(ACTIONS.ERROR, onErrorChange)
     on(ACTIONS.CLOSE, onErrorChange)
     on(ACTIONS.STATE_UPDATE, () => onErrorChange())
-
+  
     buildControls(window, (controls: Controls) => {
       send('input', {
         arrowUp: controls.keys.ArrowUp,
@@ -116,7 +115,7 @@ function beginConnection(host: string): Promise<string> {
     })
     on(ACTIONS.INIT, (id: string) => myId = id)
     on(ACTIONS.STATE_INIT, () => stateIsReady = true )
-    on(ACTIONS.INIT, () => {
+    on(ACTIONS.STATE_INIT, () => {
       const character = localStorage.getItem('character')
       character && send('character', JSON.parse(character))
     })

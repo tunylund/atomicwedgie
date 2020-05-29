@@ -57,15 +57,15 @@ i {
 }
 i.man {
   width: 42px;
-  height: 40px;
-  padding: 4px 0;
+  height: 42px;
+  padding: 0;
 }
-i.man.green { background-image: url('/img/players/walk/man1_1.png'); }
-i.man.blue  { background-image: url('/img/players/walk/man2_1.png'); }
-i.man.orange{ background-image: url('/img/players/walk/man3_1.png'); }
-i.man.brown { background-image: url('/img/players/walk/man4_1.png'); }
-i.man.purple{ background-image: url('/img/players/walk/man5_1.png'); }
-i.man.yellow{ background-image: url('/img/players/walk/man6_1.png'); }
+i.man.green { background-color: #38b871; }
+i.man.blue  { background-color: #3788be; }
+i.man.orange{ background-color: #f06d01; }
+i.man.brown { background-color: #88614a; }
+i.man.purple{ background-color: #c40ccd; }
+i.man.yellow{ background-color: #b6ae1a; }
 
 label {
   display: inline-block;
@@ -76,7 +76,8 @@ label {
   color: red;
   position: absolute;
   right: 0;
-  top: -3px;
+  top: -4px;
+  right: 3px;
 }
 .taken-info {
   display: none;
@@ -102,7 +103,7 @@ input[type=radio]:hover + i {
   border: solid 1px #fff;
 }
 input:checked + i {
-  background-color: #fff;
+  border-color: #fff;
   background-position: center;
 }
 input:disabled + i {
