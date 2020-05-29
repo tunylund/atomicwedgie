@@ -37,6 +37,7 @@ export interface GameState extends State {
   players: Player[]
   pills: Pill[]
   map: Map
+  startTime: number
   timeUntilEndGame: number
   timeUntilNextGame: number
   scores: Score[]

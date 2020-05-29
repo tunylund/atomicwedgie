@@ -202,8 +202,8 @@
         "affectsGlobalScope": false
       },
       "./node_modules/tiny-game-engine/lib/collision.d.ts": {
-        "version": "bc08aec8e11c29e676c971c9ba28482371dd4c09af2c9d963728b6807f2f5a2d",
-        "signature": "bc08aec8e11c29e676c971c9ba28482371dd4c09af2c9d963728b6807f2f5a2d",
+        "version": "88f3ae19355a17cd1d42c671f484831b78c9251b52085c7ee21619e913d061ed",
+        "signature": "88f3ae19355a17cd1d42c671f484831b78c9251b52085c7ee21619e913d061ed",
         "affectsGlobalScope": false
       },
       "./node_modules/tiny-game-engine/lib/index.d.ts": {
@@ -232,8 +232,8 @@
         "affectsGlobalScope": false
       },
       "./types.d.ts": {
-        "version": "369f38d039ffe3128a18b6ae4f404c98635d3c4770a5128a557bcdaa50223322",
-        "signature": "369f38d039ffe3128a18b6ae4f404c98635d3c4770a5128a557bcdaa50223322",
+        "version": "788a49550b041569aec3b39a155ea6da8eb94964830d5ba66af531cbd730b1e9",
+        "signature": "788a49550b041569aec3b39a155ea6da8eb94964830d5ba66af531cbd730b1e9",
         "affectsGlobalScope": false
       },
       "../node_modules/@types/node/globals.d.ts": {
