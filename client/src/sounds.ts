@@ -1,4 +1,4 @@
-import { AssetKey, Modes, Player } from "../../types/types"
+import { AssetKey, Modes, Player, EffectType } from "../../types/types"
 import { getFlags } from "./players"
 import { getAsset, AudioBuilder } from "./assets"
 import { distance } from "tiny-game-engine/lib/index"
@@ -6,35 +6,18 @@ import { distance } from "tiny-game-engine/lib/index"
 const r = (max: number) => Math.ceil(Math.random()*max)
 const sound = (key: string) => getAsset<AudioBuilder>(key as AssetKey)()
 
-const insult = () => sound(`laugh-${r(6)}`).start()
+const insult = releaseValve('insult', () => sound(`laugh-${r(6)}`).start())
 const walk = () => sound(`walk-${r(3)}`).start()
-const wedgie = () => sound(`performWedgie-${r(4)}`).start()
-const banzai = () => {
+const wedgie = releaseValve('wedgie', () => sound(`performWedgie-${r(4)}`).start())
+const banzai = releaseValve('banzai', () => {
   const s = sound(`performBanzai-${r(3)}`)
   s.start(s.context.currentTime + 0.4)
-}
-const clubsOut = () => sound(`banzaiScream-${r(3)}`).start()
-const wedgied = () => sound(`arrgh-${r(4)}`).start()
-const banzaid = () => sound(`arrgh-${r(4)}`).start()
-const uliuli = () => sound(`uliuliuli`).start()
-const nomnom = () => sound(`pill-${r(3)}`).start()
-
-const modes = new Map<string, Modes>()
-export function playMode(player: Player, myId: string) {
-  if (modes.get(player.id) !== player.mode) {
-    const { isAttacking, isInBanzai, isMoving, isDead, isDeadByBanzai, isDeadByWedgie } = getFlags(player)
-    const previousMode = modes.get(player.id)
-    modes.set(player.id, player.mode)
-    const wasInBanzai = previousMode && [Modes.BanzaiAttack, Modes.BanzaiStand, Modes.BanzaiWalk].includes(previousMode)
-
-    if (!wasInBanzai && isInBanzai) clubsOut() 
-    if (isAttacking && isInBanzai) releaseValve('any-banzai', banzai, 500)()
-    if (isAttacking && !isInBanzai) wedgie()
-    if (isDeadByBanzai) banzaid()
-    if (isDeadByWedgie) wedgied()
-    if (player.id === myId && isDead) insult()
-  }
-}
+})
+const clubsOut = releaseValve('clubsOut', () => sound(`banzaiScream-${r(3)}`).start())
+const wedgied = releaseValve('wedgied', () => sound(`arrgh-${r(4)}`).start())
+const banzaid = releaseValve('banzaid', () => sound(`arrgh-${r(4)}`).start())
+const uliuli = releaseValve('uliuli', () => sound(`uliuliuli`).start())
+const nomnom = releaseValve('nomnom', () => sound(`pill-${r(3)}`).start())
 
 const valves = new Map<string, boolean>()
 function releaseValve(id: string, fn: any, timeout = 300) {
@@ -45,6 +28,36 @@ function releaseValve(id: string, fn: any, timeout = 300) {
       setTimeout(() => valves.set(id, true), timeout)
     }
   }
+}
+
+const modes = new Map<string, Modes>()
+export function playModeChanges(players: Player[], myId: string) {
+  players.map(player => {
+    if (modes.get(player.id) !== player.mode) {
+      const { isAttacking, isInBanzai, isDead, isDeadByBanzai, isDeadByWedgie } = getFlags(player)
+      const previousMode = modes.get(player.id)
+      modes.set(player.id, player.mode)
+      const wasInBanzai = previousMode && [Modes.BanzaiAttack, Modes.BanzaiStand, Modes.BanzaiWalk].includes(previousMode)
+  
+      if (!wasInBanzai && isInBanzai) clubsOut() 
+      if (isAttacking && isInBanzai) releaseValve('any-banzai', banzai, 500)()
+      if (isAttacking && !isInBanzai) wedgie()
+      if (isDeadByBanzai) banzaid()
+      if (isDeadByWedgie) wedgied()
+      if (player.id === myId && isDead) insult()
+    }
+  })
+}
+
+let effects: EffectType[] = []
+export function playEffects(player: Player) {
+  player.effects
+    .filter(fx => !effects.includes(fx.type))
+    .map(fx => {
+      if (fx.type === EffectType.Green) uliuli()
+      else nomnom()
+    })
+  effects = player.effects.map(fx => fx.type)
 }
 
 export function playSteps(protagonist: Player, players: Player[]) {
