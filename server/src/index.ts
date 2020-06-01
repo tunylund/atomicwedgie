@@ -30,7 +30,7 @@ const httpServer = http.createServer((req, res) => {
 })
 
 const iceServers = JSON.parse(readFileSync('.env', 'utf8'))
-console.log(`using iceServers: ${iceServers}`)
+console.log(`using iceServers: ${JSON.stringify(iceServers)}`)
 
 start(httpServer, initialState, addClient, { iceServers })
 
