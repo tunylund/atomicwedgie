@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "deep-diff": "^1.0.2",
-    "shared-state-client": "^0.1.4",
+    "shared-state-client": "^0.1.5",
     "socket.io-client": "^2.3.0",
     "tiny-game-engine": "tunylund/tiny-game-engine"
   },

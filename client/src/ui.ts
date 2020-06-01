@@ -9,15 +9,31 @@ function drawTime(timeUntilEndGame: number) {
   })
 }
 
-function drawLagStatistics(lagStatistics: {}, players: Player[], myId: string) {
+function drawLagStatistics(lagStatistics: {[id:string]: {lag:number}}, players: Player[], myId: string) {
   draw((ctx, cw, ch) => {
     ctx.font = '12px Arial'
     ctx.fillStyle = 'white'
     ctx.fillText(`lag statistics:`, -cw + 15, -ch + 55)
-    Object.entries(lagStatistics).map(([id, lag], ix) => {
+    Object.entries(lagStatistics).map(([id, {lag}], ix) => {
       const name = players.find(p => p.id === id)?.name || '--unknown--'
       ctx.fillStyle = id === myId ? 'white' : 'hsl(0,0%,75%)'
       ctx.fillText(`${name}: ${lag}ms`, -cw + 15, -ch + 75 + 20 * ix)
+    })
+  })
+}
+
+function drawControls() {
+  draw((ctx, cw, ch) => {
+    ctx.font = '12px Arial'
+    ctx.fillStyle = 'white'
+    const texts = [
+      '←↑→ move', `🅐 wedgie/banzai`, `🅢 clubs out`, 'Wedgie only works from',
+      'behind and banzai is visible', 'for all.',
+      '5 points per wedgie',
+      '2 points per banzai']
+    const w = texts.map(text => ctx.measureText(text).width).sort((a, b) => b-a)[0]
+    texts.map((text, ix) => {
+      ctx.fillText(text, cw - w - 15, -ch + 45 + 20 * ix)
     })
   })
 }
@@ -63,4 +79,5 @@ export function drawHud(timeUntilEndGame: number, scores: Score[], myId: string,
   drawLagStatistics(lagStatistics, players, myId)
   drawCurrentScore(scores, myId)
   drawInsults(insults, myId)
+  drawControls()
 }

@@ -1,5 +1,4 @@
 import { Entity, XYZ } from 'tiny-game-engine/lib/index'
-import { State } from 'shared-state-client/dist/index'
 
 export const enum Modes {
   Stand = 'Stand',
@@ -32,9 +31,10 @@ export interface Pill extends Entity {
   type: EffectType
 }
 
-export interface GameState extends State {
+export interface GameState {
   round: string
   players: Player[]
+  characters: {[id: string]: {name: string, color: string}}
   pills: Pill[]
   map: Map
   startTime: number

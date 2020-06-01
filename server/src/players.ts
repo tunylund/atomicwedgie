@@ -1,6 +1,6 @@
 import { getSpawnPoint } from "./maps";
-import { position, xyz, vector, move, vectorTo, zero, bump, Entity, distance, isAt, intersects, mul } from "tiny-game-engine";
-import { Player, Map, Modes, Score, GameState, EffectType, Insult } from "../../types/types";
+import { position, xyz, vector, move, vectorTo, zero, bump, Entity, distance, intersects } from "tiny-game-engine";
+import { Player, Map, Modes, Score, EffectType, Insult } from "../../types/types";
 import { banzaid, quote, wedgied } from "./texts";
 
 const turnSpeed = 6,
@@ -93,8 +93,8 @@ export function hitOtherPlayers(player: Player, players: Player[], scores: Score
           other.deathTimeout = banzaidDuration
           other.mode = Modes.DeadByBanzai
           other.modeCount++
-          scores.filter(s => s.id = other.id).map(s => s.banzaidCount++ )
-          scores.filter(s => s.id = player.id).map(s => {
+          scores.filter(s => s.id === other.id).map(s => s.banzaidCount++ )
+          scores.filter(s => s.id === player.id).map(s => {
             s.banzaiCount++
             s.score += 2
           })
@@ -120,8 +120,8 @@ export function hitOtherPlayers(player: Player, players: Player[], scores: Score
         other.deathTimeout = wedgiedDuration
         other.mode = Modes.DeadByWedgie
         other.modeCount++
-        scores.filter(s => s.id = other.id).map(s => s.wedgiedCount++ )
-        scores.filter(s => s.id = player.id).map(s => {
+        scores.filter(s => s.id === other.id).map(s => s.wedgiedCount++ )
+        scores.filter(s => s.id === player.id).map(s => {
           s.wedgieCount++
           s.score += 5
         })

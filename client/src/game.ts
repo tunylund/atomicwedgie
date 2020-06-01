@@ -5,7 +5,7 @@ import { drawPlayers, animatePlayers } from './players'
 import { drawShadows, buildShadowCaster, ShadowCaster } from './shadows'
 import { drawPills } from './pills'
 import { GameState, Player, Score } from '../../types/types'
-import { state, ACTIONS, on } from 'shared-state-client/dist/index'
+import { state, ACTIONS, on, statistics } from 'shared-state-client/dist/index'
 import { drawScores } from './results'
 import { playMode, playSteps } from './sounds'
 
@@ -35,7 +35,7 @@ export function startDrawingGame(myId: string) {
   })
 
   const stopDrawLoop = loop((step, gameTime) => {
-    const { map, players, pills, timeUntilEndGame, timeUntilNextGame, scores, insults, lagStatistics } = state<GameState>()
+    const { map, players, pills, timeUntilEndGame, timeUntilNextGame, scores, insults } = state<GameState>()
 
     const protagonist = players.find(p => p.id === myId)
     const protagonistPos = protagonist?.pos.cor || zero
@@ -49,7 +49,7 @@ export function startDrawingGame(myId: string) {
     drawPills(pills, offset, shadowCaster)
     drawPlayers(myId, players, offset, shadowCaster)
     drawShadows(shadowCaster, offset)
-    drawHud(timeUntilEndGame, scores, myId, insults, lagStatistics, players)
+    drawHud(timeUntilEndGame, scores, myId, insults, statistics(), players)
     tryDrawResults(timeUntilNextGame, scores)
   })
 

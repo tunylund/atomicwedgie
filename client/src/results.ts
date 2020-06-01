@@ -19,7 +19,7 @@ function getTimer(timeUntilNextGame: number) {
 function getHighestScore(scores: Score[]) {
   const score = scores.sort((a, b) => a.score - b.score)[0]
   return `<div class='score'>
-          <span class='score-label'>Highest Score: </span>${score.name}<br>
+          <span class='score-label'>Highest Score: </span>${score.name || '-- unknown --'}<br>
           with <span class='score-value'>${score.wedgieCount}</span> wedgies and
           <span class='score-value'>${score.banzaiCount}</span> ${goodAdjective()} banzais<br>
           totaling to <span class='score-value'>${score.score}</span> points.
@@ -35,14 +35,16 @@ function getMostWedgied(scores: Score[]) {
 }
 
 function getScores(scores: Score[]) {
+  const sortedScores = scores.sort((a, b) => b.score - a.score)
   return `<table class='scores'>
-    ${scores.map(score => {
+    ${sortedScores.map(score => {
       return `<tr>
-        <td>${score.name}</td>
+        <td>${score.name || '-- unknown --'}</td>
         <td><span class='score-value'>${score.wedgieCount}</span> wedgies</td>
         <td><span class='score-value'>${score.banzaiCount}</span> banzais</td>
+        <td><span class='score-value'> = ${score.score}</span></td>
       </tr>`
-    })}
+    }).join("")}
   </table>`
 }
 

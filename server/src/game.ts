@@ -1,6 +1,6 @@
 import { GameState } from '../../types/types'
 import { loop, Entity } from 'tiny-game-engine'
-import { update, state, off, on, ACTIONS, broadcast } from 'shared-state-server'
+import { update, state, off, on, ACTIONS, clients } from 'shared-state-server'
 import { randomMap, buildWalls } from './maps'
 import { tryToCreatePill, tryToConsumePills } from './pills'
 import { resetPlayer, buildScore, Input, advanceEffects, movePlayer, advanceDeathTimer, updateMode, hitOtherPlayers } from './players'
@@ -17,11 +17,18 @@ export function addClient(id: string) {
     resetGame()
     startGameLoop()
   }
-  on(id, ACTIONS.OPEN, () => addPlayer(id))
+  on(id, ACTIONS.OPEN, () => {
+    addPlayer(id)
+    update(state())
+  })
   on(id, ACTIONS.CLOSE, () => removePlayer(id))
   on(id, 'character', ({name, color}: any) => {
     const current = state<GameState>()
+    current.characters[id] = {name, color}
     const player = current.players.find(p => p.id === id)
+    current.scores
+      .filter(s => s.id === id)
+      .map(score => score.name = name)
     if (player) {
       player.name = name
       player.color = color
@@ -40,7 +47,7 @@ function resetGame() {
   current.players = []
   current.insults = []
   current.scores = []
-  current.clients.map(addPlayer)
+  clients().map(addPlayer)
   current.startTime = Date.now()
   current.timeUntilEndGame = 60
   wallEntities = buildWalls(current.map)
@@ -49,7 +56,8 @@ function resetGame() {
 
 function addPlayer(id: string) {
   const current = state<GameState>()
-  const player = resetPlayer({ id, name: 'someone', color: 'green' }, current.map)
+  const {name, color} = current.characters[id] || { name: 'someone', color: 'green' }
+  const player = resetPlayer({ id, name, color }, current.map)
   current.players.push(player)
   current.scores.push(buildScore(player))
 }
@@ -117,8 +125,6 @@ function advanceTimers(current: GameState, step: number): GameState {
 
 export const initialState: GameState = {
   round: '',
-  clients: [],
-  lagStatistics: {},
   startTime: 0,
   timeUntilEndGame: 60,
   timeUntilNextGame: 0,
@@ -126,6 +132,7 @@ export const initialState: GameState = {
   scores: [],
   insults: [],
   pills: [],
+  characters: {},
   map: randomMap()
 }
 

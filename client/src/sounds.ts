@@ -28,7 +28,7 @@ export function playMode(player: Player, myId: string) {
     const wasInBanzai = previousMode && [Modes.BanzaiAttack, Modes.BanzaiStand, Modes.BanzaiWalk].includes(previousMode)
 
     if (!wasInBanzai && isInBanzai) clubsOut() 
-    if (isAttacking && isInBanzai) banzai()
+    if (isAttacking && isInBanzai) releaseValve('any-banzai', banzai, 500)()
     if (isAttacking && !isInBanzai) wedgie()
     if (isDeadByBanzai) banzaid()
     if (isDeadByWedgie) wedgied()
@@ -37,12 +37,12 @@ export function playMode(player: Player, myId: string) {
 }
 
 const valves = new Map<string, boolean>()
-function releaseValve(id: string, fn: any) {
+function releaseValve(id: string, fn: any, timeout = 300) {
   return () => {
     if (!valves.has(id) || valves.get(id)) {
       valves.set(id, false)
       fn()
-      setTimeout(() => valves.set(id, true), 300)
+      setTimeout(() => valves.set(id, true), timeout)
     }
   }
 }
