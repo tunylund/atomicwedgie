@@ -20,10 +20,13 @@ cp -pR ./*.html ./.deploy
 
 SOURCE_DIR=".deploy"
 AWS_S3_BUCKET="atomicwedgie"
+AWS_REGION="eu-west-1"
 DEST_DIR=""
 
-aws --profile atomicwedgie \
-    --region eu-west-1 \
+[[ -z "${AWS_ACCESS_KEY_ID}" ]] && AWS_PROFILE="--profile atomicwedgie" || AWS_PROFILE=""
+
+aws ${AWS_PROFILE} \
+    --region ${AWS_REGION} \
     s3 sync ${SOURCE_DIR:-.} s3://${AWS_S3_BUCKET}/${DEST_DIR} \
     --no-progress \
     --acl public-read \
