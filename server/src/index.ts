@@ -13,6 +13,14 @@ const httpServer = http.createServer((req, res) => {
 
   switch(part) {
 
+    case "ice-servers":
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      res.setHeader('Access-Control-Allow-Methods', ['GET', 'OPTIONS'])
+      res.setHeader('Cache-Control', 'no-cache')
+      res.writeHead(200, { 'Content-type': 'application/json' })
+      res.end(JSON.stringify(iceServers))
+      break
+
     case "status":
       res.setHeader('Access-Control-Allow-Origin', '*')
       res.setHeader('Access-Control-Allow-Methods', ['GET', 'OPTIONS'])
@@ -29,7 +37,7 @@ const httpServer = http.createServer((req, res) => {
   }
 })
 
-const iceServers = JSON.parse(readFileSync('.env', 'utf8'))
+const iceServers = JSON.parse(readFileSync('.env', 'utf8')) || []
 console.log(`using iceServers: ${JSON.stringify(iceServers)}`)
 
 start(httpServer, initialState, addClient, { iceServers })

@@ -87,32 +87,16 @@ export default async function createGame() {
   }
 }
 
-function beginConnection(host: string): Promise<string> {
+async function beginConnection(host: string): Promise<string> {
   let myId: string, stateIsReady: boolean
+
+  const iceServers = await (await fetch(`${window.location.protocol}//${host}/ice-servers`)).json()
   
   return new Promise((resolve, reject) => {
     function tryResolve() {
       if (myId && stateIsReady) resolve(myId)
     }
-    connect(host, {
-      iceServers: [{
-        "urls": "stun:global.stun.twilio.com:3478?transport=udp"
-      },  {
-        "username": "2f0e8144029624228d60e5e453efc2ec0dbe71e185559eeed36abf152a06faf1",
-        "urls": "turn:global.turn.twilio.com:3478?transport=udp",
-        "credential": "XdgWiiLovT8horNRBUSN5ffSv+v/u8uDWe7CmKnB9E0="
-      },
-      {
-        "username": "2f0e8144029624228d60e5e453efc2ec0dbe71e185559eeed36abf152a06faf1",
-        "urls": "turn:global.turn.twilio.com:3478?transport=tcp",
-        "credential": "XdgWiiLovT8horNRBUSN5ffSv+v/u8uDWe7CmKnB9E0="
-      },
-      {
-        "username": "2f0e8144029624228d60e5e453efc2ec0dbe71e185559eeed36abf152a06faf1",
-        "urls": "turn:global.turn.twilio.com:443?transport=tcp",
-        "credential": "XdgWiiLovT8horNRBUSN5ffSv+v/u8uDWe7CmKnB9E0="
-      }],
-    })
+    connect(host, { iceServers })
     on(ACTIONS.INIT, (id: string) => myId = id)
     on(ACTIONS.STATE_INIT, () => stateIsReady = true )
     on(ACTIONS.STATE_INIT, () => {
