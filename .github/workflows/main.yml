@@ -30,31 +30,31 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         SOURCE_DIR: 'client/deploy'
 
-  deploy-the-server:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: server
-    steps:
-    - uses: actions/checkout@v2
-    - run: npm ci
-      working-directory: types
-    - run: npm ci
-    - run: echo $APP_ENV > .env
-    - run: ./deploy.sh
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        APP_ENV: ${{ secrets.APP_ENV }}
+  # deploy-the-server:
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: server
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - run: npm ci
+  #     working-directory: types
+  #   - run: npm ci
+  #   - run: echo $APP_ENV > .env
+  #   - run: ./deploy.sh
+  #     env:
+  #       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #       APP_ENV: ${{ secrets.APP_ENV }}
 
-  deploy-turn-server:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: turn-server
-    steps:
-    - uses: actions/checkout@v2
-    - run: ./deploy.sh
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  # deploy-turn-server:
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: turn-server
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - run: ./deploy.sh
+  #     env:
+  #       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
