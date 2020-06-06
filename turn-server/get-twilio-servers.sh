@@ -1,0 +1,1 @@
+ACCOUNT_SID=AC20345a2e4d892c3bf4f8436ff06ca487 && curl -X POST https://api.twilio.com/2010-04-01/Accounts/$ACCOUNT_SID/Tokens.json -u $ACCOUNT_SID:$ACCOUNT_TOKEN | jq .ice_servers

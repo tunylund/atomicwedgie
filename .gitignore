@@ -3,4 +3,5 @@ node_modules
 dist
 .deploy
 .env
+turn-server/run
 **/*.tsbuildinfo
