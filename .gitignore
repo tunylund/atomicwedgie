@@ -4,4 +4,5 @@ dist
 .deploy
 .env
 turn-server/run
+turn-server/turnserver.conf
 **/*.tsbuildinfo
