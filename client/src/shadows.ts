@@ -45,6 +45,7 @@ function drawShadows({ casters, layer, lights }: ShadowCaster, worldOffset: XYZ)
   drawLightsOverAmbient(lights, layer)
   draw((ctx, cw, ch) => {
     ctx.translate(worldOffset.x, worldOffset.y)
+    ctx.globalAlpha = 0.75
     ctx.drawImage(layer.canvas, 0, 0)
   })
 }
