@@ -46,6 +46,7 @@ enum Assets {
   car1 = 'img/decorations/auto1.png',
   car2 = 'img/decorations/auto2.png',
   tree1 = 'img/decorations/puu2.png',
+  tree2 = 'img/decorations/puu1.png',
 
   [`walk-1`] = 'sounds/walk/2.wav',
   [`walk-2`] = 'sounds/walk/4.wav',

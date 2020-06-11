@@ -88,7 +88,8 @@ export async function preloadImages(clientUrl: string): Promise<void[]> {
   const promises = Object.entries({
     Z: '/img/decorations/auto1.png',
     X: '/img/decorations/auto2.png',
-    O: '/img/decorations/puu2.png'
+    O: '/img/decorations/puu2.png',
+    G: '/img/decorations/puu1.png'
   }).map(async ([key, path]) => {
       const result = await loadImage(`${clientUrl}${path}`)
       polygonImages.set(key, result)
@@ -125,7 +126,7 @@ export function isSolid(map: Map, x: number, y: number) {
 }
 
 export function randomMap(): Map {
-  return maps[maps.length-1]// randomFrom(maps)
+  return randomFrom(maps)
 }
 
 export function getSpawnPoint({tiles, tileSize}: Map, collisionPolygons: Polygon[], dim: XYZ): XYZ {
@@ -183,6 +184,45 @@ const maps: Map[] = [
     ]
   },
   {
+    id: "map_12",
+    name: "The Arena 2 (2-4 players)",
+    floorAsset: 'grass',
+    tileSize: 16,
+    tiles: [
+      ",-----------------------------------GgggGggg  ",
+      "|                               GgggggggggGggg",
+      "|                             GggggOoooooggggg",
+      "|                             gggggoooooogGggg",
+      "|                             gggggooooGgggg  ",
+      "|                              ggggoGooggggg  ",
+      "|       Oooooo                 ggggoooogggOooo",
+      "|       oooooo                  Gggooooooggooo",
+      "|       ooooGggg                gggg   ggggooo",
+      "|       oooogggg                gggg       ooo",
+      "|       oooogggg                           ooo",
+      "|       oooooo                             ooo",
+      "|                                            |",
+      "|                                            |",
+      "|                   Gggg                     |",
+      "|                   gggg                     |",
+      "|                   gggg                     |",
+      "|                                            |",
+      "|                                            |",
+      "|                                            |",
+      "|       Oooooo                               |",
+      "|       oooOooooo                            |",
+      "|       ooooooooo                            |",
+      "|       ooooooooo                            |",
+      "|       ooooooooo              GggGggg       |",
+      "|       oGgggoooo            Ggggggggg       |",
+      "|        ggggoooo            ggggggGggg      |",
+      "|        gggg                gggg  gggg      |",
+      "|                                  gggg      |",
+      "|                                            |",
+      ";--------------------------------------------:"
+    ]
+  },
+  {
     id: "map_2",
     name: "Inside the Asylum (2-4 players)",
     floorAsset: 'largeMarble',
@@ -216,8 +256,8 @@ const maps: Map[] = [
       "|      |                         |     |",
       "|      |                         |     |",
       "|                                      |",
-      "|          Cc   Cc   Cc   Cc           |",
-      "|          cc   cc   cc   cc           |",
+      "|            Cc Cc   Cc Cc             |",
+      "|            cc cc   cc cc             |",
       ";--------------------------------------:"
     ]
   },

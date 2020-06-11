@@ -135,6 +135,7 @@ export const enum Asset {
   car1 = 'img/decorations/auto1.gif',
   car2 = 'img/decorations/auto2.gif',
   tree1 = 'img/decorations/puu2.gif',
+  tree2 = 'img/decorations/puu1.gif',
 
   // walk1 = 'sounds/walk/2.wav',
   // walk2 = 'sounds/walk/4.wav',

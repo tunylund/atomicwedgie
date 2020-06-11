@@ -19,12 +19,14 @@ const decorations = new Map<string, AssetKey>([
   [ 'Z', 'car1' ],
   [ 'X', 'car2' ],
   [ 'O', 'tree1' ],
+  [ 'G', 'tree2' ]
 ])
 
 const polygons = new Map<string, AssetKey>([
   [ 'Z', 'car1' ],
   [ 'X', 'car2' ],
   [ 'O', 'tree1' ],
+  [ 'G', 'tree2' ],
 ])
 
 function tileNumberToCoordinates(tile: number, tileSize: number, tilesPerRow: number) {
