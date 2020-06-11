@@ -9,7 +9,7 @@ const red = xyz(255, 0, 0)
 const green = xyz(0, 255, 0)
 const blue = xyz(0, 0, 255)
 
-function drawPlayer({ id, pos, dir, effects }: Player, worldOffset: XYZ) {
+function drawPlayer({ id, pos, dir, dim, effects }: Player, worldOffset: XYZ) {
   const animation = playerAnimations.get(id)
   if (animation) {
     const {image, x, y, frameSize} = animation.frameSequence

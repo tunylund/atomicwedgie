@@ -1,8 +1,7 @@
+import { preload as untypedPreload, getAsset as getUntypedAssets, AudioBuilder } from 'tiny-game-engine/lib/index'
 import { AssetKey } from "../../types/types"
 
-const assets = new Map<AssetKey, HTMLImageElement|AudioBufferSourceNode>()
-
-enum Asset {
+enum Assets {
   grass = "img/floors/grass-huge.png",
   grassHuge2 = "img/floors/grass2-huge.png",
   largeMarble = "img/floors/largemarble-huge.png",
@@ -10,7 +9,6 @@ enum Asset {
   largeTile = "img/floors/tile-large.png",
   walls = "img/walls/walls.png",
   blood = "img/players/blood/blood.png",
-  stats = "img/menu-backgrounds/stats.bmp",
   
   [`man-green`] = "img/players/man1.png",
   [`man-green-banzaiwalk`] = "img/players/banzai-walk/man1-banzaiwalk.png",
@@ -31,25 +29,23 @@ enum Asset {
   [`man-yellow-banzaiwalk`] = "img/players/banzai-walk/man6-banzaiwalk.png",
   [`man-yellow-banzai`] = "img/players/perform-banzai/man6-perform-banzai.png",
   
-  [`pill-red`] = "img/decorations/pilleri punainen.gif",
-  [`pill-green`] = "img/decorations/pilleri vihreä.gif",
-  [`pill-blue`] = "img/decorations/pilleri sininen.gif",
-  pillYellow = "img/decorations/pilleri keltainen.gif",
+  [`pill-red`] = "img/decorations/pilleri punainen.png",
+  [`pill-green`] = "img/decorations/pilleri vihreä.png",
+  [`pill-blue`] = "img/decorations/pilleri sininen.png",
   lightCone = "img/lights/conelight_1.png",
-  pad = 'img/pad.png',
-
-  biliardTable = 'img/decorations/biljardipöytä.gif',
-  chair = 'img/decorations/tuoli2.gif',
-  chair2 = 'img/decorations/tuoli1.gif',
-  toilet = 'img/decorations/pytty.gif',
-  sink = 'img/decorations/pesulaari.gif',
-  cauch = 'img/decorations/sohva.gif',
-  table = 'img/decorations/pöytä2.gif',
-  table2 = 'img/decorations/pöytä1.gif',
-  table3 = 'img/decorations/pöytä3.gif',
-  car1 = 'img/decorations/auto1.gif',
-  car2 = 'img/decorations/auto2.gif',
-  tree1 = 'img/decorations/puu2.gif',
+  
+  biliardTable = 'img/decorations/biljardipöytä.png',
+  chair = 'img/decorations/tuoli2.png',
+  chair2 = 'img/decorations/tuoli1.png',
+  toilet = 'img/decorations/pytty.png',
+  sink = 'img/decorations/pesulaari.png',
+  cauch = 'img/decorations/sohva.png',
+  table = 'img/decorations/pöytä2.png',
+  table2 = 'img/decorations/pöytä1.png',
+  table3 = 'img/decorations/pöytä3.png',
+  car1 = 'img/decorations/auto1.png',
+  car2 = 'img/decorations/auto2.png',
+  tree1 = 'img/decorations/puu2.png',
 
   [`walk-1`] = 'sounds/walk/2.wav',
   [`walk-2`] = 'sounds/walk/4.wav',
@@ -86,58 +82,12 @@ enum Asset {
   [`arrgh-4`] = 'sounds/arrgh/4.wav'
 }
 
-function loadImage(url: string): Promise<HTMLImageElement> {
-  return fetch(url)
-    .then(response => response.blob())
-    .then(blob => {
-      const image = new Image()
-      image.src = URL.createObjectURL(blob)
-      return image
-  })
-}
-
-const audioCtx = new AudioContext()
-export type AudioBuilder = () => AudioBufferSourceNode
-function loadSound(url: string): Promise<AudioBuilder> {
-  return fetch(url)
-    .then(response => response.arrayBuffer())
-    .then(buffer => audioCtx.decodeAudioData(buffer))
-    .then(audioBuffer => {
-      return () => {
-        const source = audioCtx.createBufferSource()
-        source.buffer = audioBuffer
-        source.connect(audioCtx.destination)
-        return source
-      }
-    })
-}
-
-function load(key: string, url: string): Promise<any> {
-  const isImage = url.endsWith('gif') || url.endsWith('png') || url.endsWith('bmp')
-  const isSound = url.endsWith('wav') || url.endsWith('mp3')
-  const loader = isImage ? loadImage : isSound ? loadSound : null
-  if (loader) {
-    // @ts-ignore
-    return loader(url).then((resource: any) => assets.set(key, resource))
-  }
-
-  return Promise.reject(`unsupported resource type ${url}`)
-}
-
 function preload(onAssetReady: (ready: number, expected: number) => void) {
-  let ready = 0, expected = Object.entries(Asset).length
-  const promises = Object.entries(Asset)
-    .map(([key, url]) => load(key, url).then(() => onAssetReady(++ready, expected)))
-  onAssetReady(ready, expected)
-  return Promise.all(promises)
+  return untypedPreload(Assets, onAssetReady)
 }
 
 function getAsset<T extends HTMLImageElement | AudioBuilder>(asset: AssetKey): T {
-  const r = assets.get(asset)
-  if (r === undefined) throw new Error(`asset ${asset} is not available`)
-  else return r as T
+  return getUntypedAssets(asset)
 }
-// @ts-ignore
-window.getAsset = getAsset
 
 export { preload, getAsset, AssetKey }

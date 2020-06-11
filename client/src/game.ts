@@ -1,8 +1,8 @@
-import { loop, draw, xyz, zero } from 'tiny-game-engine/lib/index'
+import { loop, draw, xyz, zero, fixedSizeDrawingLayer } from 'tiny-game-engine/lib/index'
 import { drawHud } from './ui'
 import { drawMap } from './maps'
 import { drawPlayers, animatePlayers } from './players'
-import { drawShadows, buildShadowCaster, ShadowCaster } from './shadows'
+import { drawShadows, buildShadowCaster, ShadowCaster, drawShadowCasters } from './shadows'
 import { drawPills } from './pills'
 import { GameState, Player, Score } from '../../types/types'
 import { state, ACTIONS, on, statistics } from 'shared-state-client/dist/index'
@@ -20,8 +20,12 @@ function centerMapOrPlayerOrBindToEdge(availableSpace: number, mapSize: number, 
 }
 
 export function startDrawingGame(myId: string) {
-  let shadowCaster: ShadowCaster
-  on(ACTIONS.INIT, (id: string) => myId = id)
+  let shadowCaster: ShadowCaster = {
+    round: '-1',
+    layer: fixedSizeDrawingLayer(0, 0),
+    casters: [],
+    lights: [],
+  }
 
   const stopAnimationLoop = loop((step) => {
     const current = state<GameState>()

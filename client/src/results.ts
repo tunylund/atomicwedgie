@@ -17,7 +17,7 @@ function getTimer(timeUntilNextGame: number) {
 }
 
 function getHighestScore(scores: Score[]) {
-  const score = scores.sort((a, b) => a.score - b.score)[0]
+  const score = scores.sort((a, b) => b.score - a.score)[0]
   return `<div class='score'>
           <span class='score-label'>Highest Score: </span>${score.name || '-- unknown --'}<br>
           with <span class='score-value'>${score.wedgieCount}</span> wedgies and
@@ -27,7 +27,7 @@ function getHighestScore(scores: Score[]) {
 }
 
 function getMostWedgied(scores: Score[]) {
-  const score = scores.sort((a, b) => a.score - b.score)[0]
+  const score = scores.sort((a, b) => b.wedgiedCount - a.wedgiedCount)[0]
   return `<div class='score'>
           <span class='score-label'>Most Wedgied: </span> ${score.name}<br>
           with <span class='score-value'>${score.wedgiedCount}</span> ${badAdjective()} wedgies pulled on them

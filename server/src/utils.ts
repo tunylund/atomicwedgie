@@ -1,4 +1,3 @@
-
 export function randomBetween(a = 0, b = 10) {
   return Math.floor((Math.random()*b)+a);
 }

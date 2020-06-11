@@ -1,6 +1,6 @@
 import { draw, XYZ } from "tiny-game-engine/lib/index"
 import { getShadowOpacity, ShadowCaster } from "./shadows"
-import { getAsset, AssetKey } from "./assets"
+import { getAsset } from "./assets"
 import { Pill } from "../../types/types"
 
 function drawPill(pill: Pill, worldOffset: XYZ, shadowCaster: ShadowCaster) {

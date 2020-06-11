@@ -7,7 +7,6 @@ const quotes = [
     'Its not my fault you suck!',
     'You sick little monkey!',
     'Situation normal: all fucked up!',
-    'I wish you cancer! Cancer in the head!',
     'You are so stupid! You cannot find ass with both hands!',
     'You suck ass. You see an ass and you suck it. You are an ass-sucker.',
     'You cannot win.',

@@ -1,7 +1,7 @@
 import { AssetKey, Modes, Player, EffectType } from "../../types/types"
 import { getFlags } from "./players"
-import { getAsset, AudioBuilder } from "./assets"
-import { distance } from "tiny-game-engine/lib/index"
+import { getAsset } from "./assets"
+import { distance, AudioBuilder } from "tiny-game-engine/lib/index"
 
 const r = (max: number) => Math.ceil(Math.random()*max)
 const sound = (key: string) => getAsset<AudioBuilder>(key as AssetKey)()

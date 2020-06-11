@@ -1,4 +1,4 @@
-import { Entity, XYZ } from 'tiny-game-engine/lib/index'
+import { Entity, XYZ, Polygon } from 'tiny-game-engine/lib/index'
 
 export const enum Modes {
   Stand = 'Stand',
@@ -42,6 +42,7 @@ export interface GameState {
   timeUntilNextGame: number
   scores: Score[]
   insults: Insult[]
+  collisionPolygons: Polygon[]
 }
 
 export const enum EffectType {

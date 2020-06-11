@@ -2,7 +2,7 @@ import http from 'http'
 import urlParser from 'url'
 import { start } from 'shared-state-server'
 import { initialState, addClient, status } from './game'
-import { readFileSync } from 'fs'
+import { preloadImages } from './maps'
 
 const port = process.env.PORT || 8888
 
@@ -37,10 +37,14 @@ const httpServer = http.createServer((req, res) => {
   }
 })
 
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:8080'
 const iceServers = JSON.parse(process.env.ICE_SERVERS || '[]')
 console.log(`using iceServers: ${JSON.stringify(iceServers)}`)
 
-start(httpServer, initialState, addClient, { iceServers })
-
-httpServer.listen(port)
-console.log(`Server running at http://127.0.0.1:${port}/`)
+preloadImages(clientUrl).then(() => {
+  start(httpServer, initialState, addClient, { iceServers })
+  httpServer.listen(port)
+  console.log(`Server running at http://127.0.0.1:${port}/`)
+}).catch(err => {
+  console.error(err)
+})

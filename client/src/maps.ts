@@ -1,6 +1,31 @@
-import { draw, XYZ } from 'tiny-game-engine/lib/index'
+import { draw, XYZ, Polygon, add, xyz } from 'tiny-game-engine/lib/index'
 import { getAsset, AssetKey } from './assets'
 import { Map } from '../../types/types'
+import { textureToPolygon } from './textureToPolygon'
+
+const walls = [ ',', '.', '-', '|', '|', ';', ':' ]
+
+const decorations = new Map<string, AssetKey>([
+  [ 'B', 'biliardTable' ],
+  [ 'C', 'chair' ],
+  [ 'K', 'chair2' ],
+  [ 'Q', 'chair2' ],
+  [ 'W', 'toilet' ],
+  [ 'S', 'sink' ],
+  [ 'H', 'cauch' ],
+  [ 'T', 'table' ],
+  [ 'L', 'table2' ],
+  [ 'P', 'table3' ],
+  [ 'Z', 'car1' ],
+  [ 'X', 'car2' ],
+  [ 'O', 'tree1' ],
+])
+
+const polygons = new Map<string, AssetKey>([
+  [ 'Z', 'car1' ],
+  [ 'X', 'car2' ],
+  [ 'O', 'tree1' ],
+])
 
 function tileNumberToCoordinates(tile: number, tileSize: number, tilesPerRow: number) {
   const row = Math.floor(tile / tilesPerRow) * tileSize
@@ -13,7 +38,7 @@ function drawFloor(ctx: CanvasRenderingContext2D, floorImage: HTMLImageElement, 
   ctx.fillRect(0, 0, w, h)
 }
 
-function mapTiles(tiles: string[], fn: (tile: string, col: number, row: number) => any) {
+export function mapTiles(tiles: string[], fn: (tile: string, col: number, row: number) => any) {
   for (let row=0, k=tiles.length; row < k; row++) {
     for (let col=0, l=tiles[row].length; col < l; col++) {
       fn(tiles[row][col], col, row)
@@ -71,42 +96,94 @@ export function drawMap(map: Map, worldOffset: XYZ) {
   })
 }
 
-export function isSolid(map: Map, x: number, y: number) {
+function isWall(map: Map, x: number, y: number) {
   const tileX = x / map.tileSize
   const tileY = y / map.tileSize
   const tile = map.tiles[tileY][tileX]
-  return walls.includes(tile) ||
-    decorations.has(tile) || 
-    decorations_.includes(tile)
+  return walls.includes(tile)
 }
 
-
-export function isShadowCasting(map: Map, x: number, y: number) {
-  const tileX = x / map.tileSize
-  const tileY = y / map.tileSize
-  const tile = map.tiles[tileY][tileX]
-  return walls.includes(tile) ||
-    bigDecorations.includes(tile) || 
-    bigDecorations_.includes(tile)
+export function buildPolygons(map: Map): Polygon[] {
+  const result: Polygon[] = []
+  mapTiles(map.tiles, (tile, col, row) => {
+    const offset = xyz(col * map.tileSize, row * map.tileSize)
+    const polygon = polygons.get(tile)
+    if (polygon) {
+      const image = getAsset<HTMLImageElement>(polygon)
+      const points = textureToPolygon(image)
+      const poly = points.map(p => add(offset, p))
+      result.push(poly)
+    }
+  })
+  return result
 }
 
-const walls = [ ',', '.', '-', '|', '|', ';', ':' ]
-const bigDecorations = [ 'Z', 'X', 'O']
-const bigDecorations_ = [ 'Z', 'X', 'O'].map(s => s.toLowerCase())
+export function buildWallPolygons(map: Map): Polygon[] {
+  let pols = [],
+      w = map.tiles[0].length * map.tileSize,
+      h = map.tiles.length * map.tileSize,
+      tw = map.tileSize,
+      th = map.tileSize,
+      poly = null
 
-const decorations = new Map<string, AssetKey>([
-  [ 'B', 'biliardTable' ],
-  [ 'C', 'chair' ],
-  [ 'K', 'chair2' ],
-  [ 'Q', 'chair2' ],
-  [ 'W', 'toilet' ],
-  [ 'S', 'sink' ],
-  [ 'H', 'cauch' ],
-  [ 'T', 'table' ],
-  [ 'L', 'table2' ],
-  [ 'P', 'table3' ],
-  [ 'Z', 'car1' ],
-  [ 'X', 'car2' ],
-  [ 'O', 'tree1' ],
-])
-const decorations_ = Array.from(decorations.keys()).map(c => c.toLowerCase())
+  //horPass
+  for(let y=th; y<h-th; y=y+th) {
+    for(let x=tw; x<w-tw; x=x+tw) {
+      let hit = isWall(map, x, y)
+      if(hit) {
+        if(poly) {
+          poly[1].x = poly[2].x = x + tw
+        } else {
+          poly = [
+            {x: x, y: y},
+            {x: x + tw, y: y},
+            {x: x + tw, y: y + th},
+            {x: x, y: y + th}
+          ]
+        }
+      } else {
+        //don't care for 16width polys
+        //don't care for outer walls
+        if(poly && poly[1].x - poly[0].x > tw) {
+          pols.push(poly)
+        }
+        poly = null
+      }
+    }
+    if(poly && poly[1].x - poly[0].x > tw) {
+      pols.push(poly)
+    }
+    poly = null
+  }
+
+  //verPass
+  for(let x=tw; x<w-tw; x=x+tw) {
+    for(let y=th; y<h-th; y=y+th) {
+      let hit = isWall(map, x, y)
+      if(hit) {
+        if(poly) {
+          poly[2].y = poly[3].y = y + th
+        } else {
+          poly = [
+            {x: x, y: y},
+            {x: x + tw, y: y},
+            {x: x + tw, y: y + th},
+            {x: x, y: y + th}
+          ]
+        }
+      } else {
+        //don't care for 16height polys
+        if(poly && poly[2].y - poly[1].y > th) {
+          pols.push(poly)
+        }
+        poly = null
+      }
+    }
+    if(poly && poly[2].y - poly[1].y > th) {
+      pols.push(poly)
+    }
+    poly = null
+  }
+
+  return pols.map(p => p.map(({x, y}) => xyz(x, y)))
+}

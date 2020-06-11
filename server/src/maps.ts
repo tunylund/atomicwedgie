@@ -1,8 +1,9 @@
-import { Map, AssetKey } from '../../types/types'
+import { Map } from '../../types/types'
 import { randomFrom, randomBetween } from './utils'
-import { XYZ, xyz, Entity, entity, position } from 'tiny-game-engine'
+import { XYZ, xyz, Polygon, imageToPolygon, add, circleCollidesWithPolygon, collisionCircle, position, entity, two } from 'tiny-game-engine'
+import Jimp from 'jimp'
 
-export function buildWalls(map: Map): Entity[] {
+export function buildWalls(map: Map): Polygon[] {
 
   let pols = [],
       w = map.tiles[0].length * map.tileSize,
@@ -70,10 +71,44 @@ export function buildWalls(map: Map): Entity[] {
     poly = null
   }
 
-  return pols.map(poly => {
-    const dim = xyz(poly[2].x - poly[0].x, poly[2].y - poly[0].y, 100)
-    const cor = xyz(poly[0].x + dim.x2, poly[0].y + dim.y2)
-    return entity(position(cor), dim)
+  return pols.map(poly => poly.map(p => xyz(p.x, p.y)))
+}
+
+const polygonImages = new Map<string, {data: Uint8ClampedArray, width: number, height: number}>()
+async function loadImage(url: string): Promise<{data: Uint8ClampedArray, width: number, height: number}> {
+  //@ts-ignore
+  const img = await Jimp.read({url, timeout: 3000})
+  return {
+    data: new Uint8ClampedArray(img.bitmap.data),
+    width: img.getWidth(),
+    height: img.getHeight()
+  }
+}
+export async function preloadImages(clientUrl: string): Promise<void[]> {
+  const promises = Object.entries({
+    Z: '/img/decorations/auto1.png',
+    X: '/img/decorations/auto2.png',
+    O: '/img/decorations/puu2.png'
+  }).map(async ([key, path]) => {
+      const result = await loadImage(`${clientUrl}${path}`)
+      polygonImages.set(key, result)
+    })
+  return await Promise.all(promises)
+}
+
+export function buildPolygons(map: Map): Polygon[] {
+  return map.tiles.flatMap((chars, row) => {
+    return chars.split('')
+      .map((tile, col) => {
+        const img = polygonImages.get(tile)
+        if (img) {
+          const offset = xyz(col * map.tileSize, row * map.tileSize)
+          const {data, width, height} = img
+          const points = imageToPolygon(data, width, height)
+          return points.map(p => add(p, offset))
+        } else return []
+      })
+      .filter(p => p.length > 0)
   })
 }
 
@@ -90,19 +125,19 @@ export function isSolid(map: Map, x: number, y: number) {
 }
 
 export function randomMap(): Map {
-  return randomFrom(maps)
+  return maps[maps.length-1]// randomFrom(maps)
 }
 
-export function getSpawnPoint({tiles, tileSize}: Map): XYZ {
-  const w = tiles[0].length-2,
-        h = tiles.length-2
+export function getSpawnPoint({tiles, tileSize}: Map, collisionPolygons: Polygon[], dim: XYZ): XYZ {
   while(true) {
-    const rx = randomBetween(2, w),
-          ry = randomBetween(2, h)
+    const rx = randomBetween(2, tiles[0].length-2),
+          ry = randomBetween(2, tiles.length-2)
+    const circle = collisionCircle(entity(position(xyz(rx * tileSize, ry * tileSize)), add(dim, two)))
     let isok = true
     for (let x of [-1, 0, 1]) for (let y of [-1, 0, 1]) {
       isok = isok && tiles[ry+y][rx+x] === ' '
     }
+    isok = isok && !collisionPolygons.find(poly => circleCollidesWithPolygon(circle, poly))
     if (isok) return xyz(rx * tileSize, ry * tileSize)
   }
 }
@@ -414,6 +449,45 @@ const maps: Map[] = [
       "|                                      |",
       "|                                      |",
       "|                                      |",
+      ";--------------------------------------:"
+    ]
+  },
+  {
+    id: "map_7",
+    name: "outdoors (2-8)",
+    floorAsset: 'grass',
+    tileSize: 16,
+    tiles: [
+      ",--------------------------------------.",
+      "|                                      |",
+      "|                                      |",
+      "|                                      |",
+      "|                                      |",
+      "|                                      |",
+      "|                    Oooooo            |",
+      "|                    oooooo            |",
+      "|      Oooooo        oooooo            |",
+      "|      oooooo        oooooo            |",
+      "|      oooooo        oooooo            |",
+      "|      oooooo        oooooo            |",
+      "|      oooooo                          |",
+      "|      oooooo                          |",
+      "|                          Oooooo      |",
+      "|                          oooooo      |",
+      "|                          oooooo      |",
+      "|                          oooooo      |",
+      "|           Oooooo         oooooo      |",
+      "|           oooooo         oooooo      |",
+      "|           oooooo           Xxxxxxxxxxx",
+      "|           oooooo           xxxxxxxxxxx",
+      "|           oooooo           xxxxxxxxxxx",
+      "|           oooooo           xxxxxxxxxxx",
+      "|                            xxxxxxxxxxx",
+      "|                            Zzzzzzzzzzz",
+      "|                            zzzzzzzzzzz",
+      "|                            zzzzzzzzzzz",
+      "|                            zzzzzzzzzzz",
+      "|                            zzzzzzzzzzz",
       ";--------------------------------------:"
     ]
   }

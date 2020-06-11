@@ -27,8 +27,9 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "jimp": "^0.13.0",
     "shared-state-server": "^0.1.5",
-    "tiny-game-engine": "tunylund/tiny-game-engine",
+    "tiny-game-engine": "github:tunylund/tiny-game-engine",
     "uuid": "^8.1.0"
   }
 }

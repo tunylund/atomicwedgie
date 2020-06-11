@@ -1,5 +1,5 @@
 import { getSpawnPoint } from "./maps";
-import { position, xyz, vector, move, vectorTo, zero, bump, Entity, distance, intersects } from "tiny-game-engine";
+import { position, xyz, vector, move, vectorTo, zero, Entity, distance, Polygon, polygonCollidesWithPoint, polygonCollidesWithPolygon, collisionRect, circleCollidesWithPolygon, collisionCircle } from "tiny-game-engine";
 import { Player, Map, Modes, Score, EffectType, Insult } from "../../types/types";
 import { banzaid, quote, wedgied } from "./texts";
 
@@ -13,7 +13,7 @@ const turnSpeed = 6,
       banzaidDuration = 5,
       wedgiedDuration = 4
 
-export function buildScore({ id, name }: Player): Score {
+export function buildScore({id, name}: Player): Score {
   return {
     id, name, score: 0, wedgieCount: 0, wedgiedCount: 0, banzaiCount: 0, banzaidCount: 0
   }
@@ -39,7 +39,7 @@ const defaultInput = {
   resetAttack: false
 }
 
-export function movePlayer(player: Player, input: Input = defaultInput, walls: Entity[], step: number) {
+export function movePlayer(player: Player, input: Input = defaultInput, collisionPolygons: Polygon[], step: number) {
   const { isDeadByBanzai, isInBanzai } = getFlags(player)
 
   if (isDeadByBanzai) {
@@ -58,8 +58,10 @@ export function movePlayer(player: Player, input: Input = defaultInput, walls: E
     const nextX = position(xyz(nextPos.cor.x, pos.cor.y))
     const nextY = position(xyz(pos.cor.x, nextPos.cor.y))
     player.pos = position(xyz(
-      (walls.find(w => intersects(w, {pos: nextX, dim, dir}))) ? pos.cor.x : nextPos.cor.x,
-      (walls.find(w => intersects(w, {pos: nextY, dim, dir}))) ? pos.cor.y : nextPos.cor.y,
+      collisionPolygons.find(p => circleCollidesWithPolygon(collisionCircle({pos: nextX, dim, dir}), p))
+      ? pos.cor.x : nextPos.cor.x,
+      collisionPolygons.find(p => circleCollidesWithPolygon(collisionCircle({pos: nextY, dim, dir}), p))
+      ? pos.cor.y : nextPos.cor.y
     ), nextPos.vel, nextPos.acc)
   }
 }
@@ -144,26 +146,29 @@ export function advanceEffects(player: Player, step: number) {
     .filter(effect => effect.duration > 0)
 }
 
-export function advanceDeathTimer(player: Player, map: Map, step: number) {
+export function advanceDeathTimer(player: Player, map: Map, collisionPolygons: Polygon[], step: number) {
   if (player.deathTimeout > 0) {
     player.deathTimeout -= step
     if (player.deathTimeout <= 0) {
-      Object.assign(player, resetPlayer(player, map))
+      Object.assign(player, resetPlayer(player.id, player, map, collisionPolygons))
     }
   }
 }
 
-export function resetPlayer(player: Partial<Player>, map: Map): Player {
+export function resetPlayer(id: string, {name, color}: Partial<Player>, map: Map, collisionPolygons: Polygon[]): Player {
   return {
-    ...player,
-    pos: position(getSpawnPoint(map)),
-    dim: xyz(32, 32, 32),
+    id,
+    name: name || 'someone',
+    color: color || 'green',
+    pos: position(getSpawnPoint(map, collisionPolygons, xyz(16, 16, 16))),
+    dim: xyz(16, 16, 16),
     dir: vector(Math.PI * 2 * Math.random(), 1),
     mode: Modes.Stand,
     modeCount: 1,
-    moveSpeed: walkSpeed,
-    effects: []
-  } as Player
+    effects: [],
+    deathTimeout: 0,
+    attackDuration: 0
+  }
 }
 
 function getFlags({pos, mode, effects, deathTimeout}: Player) {

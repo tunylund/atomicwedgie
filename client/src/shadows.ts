@@ -1,7 +1,7 @@
 import { getAsset } from './assets'
-import { fixedSizeDrawingLayer, draw, position, Entity, xyz, XYZ, zero, Layer, negone, mul } from 'tiny-game-engine/lib/index'
-import { isShadowCasting } from './maps'
+import { fixedSizeDrawingLayer, draw, position, Entity, xyz, XYZ, zero, Layer, negone, mul, Polygon, sub } from 'tiny-game-engine/lib/index'
 import { Map } from '../../types/types'
+import { buildWallPolygons, buildPolygons } from './maps'
 
 interface Light extends Entity {
   image: HTMLImageElement
@@ -27,7 +27,7 @@ interface ShadowCaster {
 }
 
 function buildShadowCaster(map: Map, round: string): ShadowCaster {
-  const casters = buildWallPolygons(map)
+  const casters = buildWallPolygons(map).concat(buildPolygons(map))
   const layer = fixedSizeDrawingLayer(
     map.tiles[0].length * map.tileSize,
     map.tiles.length * map.tileSize
@@ -38,7 +38,7 @@ function buildShadowCaster(map: Map, round: string): ShadowCaster {
 
 function drawShadows({ casters, layer, lights }: ShadowCaster, worldOffset: XYZ) {
   drawAmbient(layer)
-  // drawShadowCasters(shadowCasters, worldOffset)
+  // drawShadowCasters(casters, worldOffset)
   drawLightSources(lights)
   // drawEffectiveShadowCasters(lights, shadowCasters, worldOffset)
   drawShadowRays(lights, casters)
@@ -71,15 +71,16 @@ function drawLightsOverAmbient(lights: Light[], shadowLayer: Layer) {
   }, undefined, shadowLayer)
 }
 
-type Vertice = { x: number, y: number }
-type Polygon = Vertice[]
-
-function drawShadowCasters(shadowCasters: Polygon[], worldOffset: XYZ) {
+export function drawShadowCasters(shadowCasters: Polygon[], worldOffset: XYZ) {
   draw((ctx, cw, ch) => {
     ctx.translate(worldOffset.x, worldOffset.y)
-    for (let poly of shadowCasters) {
+    for (let poly of shadowCasters || []) {
       ctx.strokeStyle = 'red'
-      ctx.strokeRect(poly[0].x, poly[0].y, poly[2].x - poly[0].x, poly[2].y - poly[0].y)
+      ctx.beginPath()
+      ctx.moveTo(poly[0].x, poly[0].y)
+      poly.slice(1).map(p => ctx.lineTo(p.x, p.y))
+      ctx.closePath()
+      ctx.stroke()
     }
   })
 }
@@ -98,27 +99,13 @@ function drawLightSources(lights: Light[]) {
   }
 }
 
-// function isWithin(light: Light, poly: Polygon): boolean {
-//   const a1 = {
-//     x: light.pos.cor.x - light.dim.x2,
-//     y: light.pos.cor.y - light.dim.y2
-//   } as XYZ
-//   const a2 = add(a1, light.dim)
-//   const b1 = poly[0] as XYZ
-//   const b2 = poly[2] as XYZ
-//   return segmentIntersects(a1, a2, b1, b2)
-// }
 function isWithin(light: Light, poly: Polygon) {
   const distance = light.dim.size/4
   const point = light.pos.cor
-  return dist(poly[0], point) < distance
-          || dist(poly[1], light.pos.cor) < distance
-          || dist(poly[2], light.pos.cor) < distance
-          || dist(poly[3], light.pos.cor) < distance
-}
-
-function dist(a: Vertice, b: Vertice) {
-  return Math.sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y))
+  return sub(poly[0], point).size < distance
+      || sub(poly[1], light.pos.cor).size < distance
+      || sub(poly[2], light.pos.cor).size < distance
+      || sub(poly[3], light.pos.cor).size < distance
 }
 
 function drawShadowRays(lights: Light[], wallPolygons: Polygon[]) {
@@ -137,7 +124,7 @@ function drawShadowRays(lights: Light[], wallPolygons: Polygon[]) {
   }
 }
 
-function determineShadows(light: Light, poly: Polygon): Vertice[][] {
+function determineShadows(light: Light, poly: Polygon): Polygon[] {
   let shadows = []
   const vertexCount = poly.length
 
@@ -175,10 +162,7 @@ function determineShadows(light: Light, poly: Polygon): Vertice[][] {
         }
 
         //one extruded by the light direction
-        let l2p = normalize({
-          x: point.x - light.pos.cor.x,
-          y: point.y - light.pos.cor.y
-        })
+        let l2p = normalize(sub(point, light.pos.cor))
         shadowVertices[svCount + 1] = {
           x: light.pos.cor.x + l2p.x * shadowLength,
           y: light.pos.cor.y + l2p.y * shadowLength
@@ -194,15 +178,11 @@ function determineShadows(light: Light, poly: Polygon): Vertice[][] {
 
   }
 
-  return shadows;
+  return shadows.map(vertices => vertices.map(({x, y}) => xyz(x, y)))
 }
 
-function normalize(vector: Vertice): Vertice {
-  const length = Math.sqrt(vector.x * vector.x + vector.y * vector.y)
-  return {
-    x: vector.x / length,
-    y: vector.y / length
-  }
+function normalize(vector: XYZ): XYZ {
+  return xyz(vector.x / vector.size, vector.y / vector.size)
 }
 function determineShadowThrowingSegments(light: Light, poly: Polygon) {
   let shadowThrowingSegments = [],
@@ -281,77 +261,6 @@ function drawTriangleStrip(ctx: CanvasRenderingContext2D, poly: Polygon, offset:
     ctx.stroke()
     ctx.fill()
   }
-}
-
-function buildWallPolygons(map: Map): Polygon[] {
-
-  let pols = [],
-      w = map.tiles[0].length * map.tileSize,
-      h = map.tiles.length * map.tileSize,
-      tw = map.tileSize,
-      th = map.tileSize,
-      poly = null
-
-  //horPass
-  for(let y=th; y<h-th; y=y+th) {
-    for(let x=tw; x<w-tw; x=x+tw) {
-      let hit = isShadowCasting(map, x, y)
-      if(hit) {
-        if(poly) {
-          poly[1].x = poly[2].x = x + tw
-        } else {
-          poly = [
-            {x: x, y: y},
-            {x: x + tw, y: y},
-            {x: x + tw, y: y + th},
-            {x: x, y: y + th}
-          ]
-        }
-      } else {
-        //don't care for 16width polys
-        //don't care for outer walls
-        if(poly && poly[1].x - poly[0].x > tw) {
-          pols.push(poly)
-        }
-        poly = null
-      }
-    }
-    if(poly && poly[1].x - poly[0].x > tw) {
-      pols.push(poly)
-    }
-    poly = null
-  }
-
-  //verPass
-  for(let x=tw; x<w-tw; x=x+tw) {
-    for(let y=th; y<h-th; y=y+th) {
-      let hit = isShadowCasting(map, x, y)
-      if(hit) {
-        if(poly) {
-          poly[2].y = poly[3].y = y + th
-        } else {
-          poly = [
-            {x: x, y: y},
-            {x: x + tw, y: y},
-            {x: x + tw, y: y + th},
-            {x: x, y: y + th}
-          ]
-        }
-      } else {
-        //don't care for 16height polys
-        if(poly && poly[2].y - poly[1].y > th) {
-          pols.push(poly)
-        }
-        poly = null
-      }
-    }
-    if(poly && poly[2].y - poly[1].y > th) {
-      pols.push(poly)
-    }
-    poly = null
-  }
-
-  return pols
 }
 
 function getShadowOpacity(cor: XYZ, {layer}: ShadowCaster) {

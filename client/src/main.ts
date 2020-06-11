@@ -1,4 +1,4 @@
-import { connect, on, ACTIONS, send, state } from 'shared-state-client/dist/index'
+import { connect, on, ACTIONS, send } from 'shared-state-client/dist/index'
 import { preload } from './assets'
 import { startDrawingGame } from './game'
 import { buildControls, Controls, draw, loop } from 'tiny-game-engine/lib/index'
@@ -61,7 +61,14 @@ export default async function createGame() {
     const stopConnectMessage = showConnectionMessage()
     const myId = await beginConnection(host)
     stopConnectMessage()
-    startDrawingGame(myId)
+    let stop = startDrawingGame(myId)
+    document.addEventListener('visibilitychange', (ev) => {
+      if (document.hidden) {
+        stop()
+      } else {
+        stop = startDrawingGame(myId)
+      }
+    }, false);
 
     let hideError: (() => void)|null
     function onErrorChange(error?: Error) {
@@ -97,14 +104,16 @@ async function beginConnection(host: string): Promise<string> {
       if (myId && stateIsReady) resolve(myId)
     }
     connect(host, { iceServers })
-    on(ACTIONS.INIT, (id: string) => myId = id)
-    on(ACTIONS.STATE_INIT, () => stateIsReady = true )
+    on(ACTIONS.INIT, (id: string) => {
+      myId = id
+      tryResolve()
+    })
     on(ACTIONS.STATE_INIT, () => {
+      stateIsReady = true
       const character = localStorage.getItem('character')
       character && send('character', JSON.parse(character))
+      tryResolve()
     })
-    on(ACTIONS.INIT, tryResolve)
-    on(ACTIONS.STATE_INIT, tryResolve)
     on(ACTIONS.ERROR, reject)
   })
 }

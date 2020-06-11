@@ -1,25 +1,18 @@
 import { GameState } from '../../types/types'
-import { loop, Entity } from 'tiny-game-engine'
+import { loop } from 'tiny-game-engine'
 import { update, state, off, on, ACTIONS, clients } from 'shared-state-server'
-import { randomMap, buildWalls } from './maps'
+import { randomMap, buildWalls, buildPolygons } from './maps'
 import { tryToCreatePill, tryToConsumePills } from './pills'
 import { resetPlayer, buildScore, Input, advanceEffects, movePlayer, advanceDeathTimer, updateMode, hitOtherPlayers } from './players'
 import { clearImmediate } from 'timers'
 import { v4 as uuid } from 'uuid'
 
-const inputs = new Map<string, Input>()
-export function applyInput(id: string, input: Input) {
-  inputs.set(id, input)
-}
-
 export function addClient(id: string) {
-  if (state<GameState>().players.length === 0) {
-    resetGame()
-    startGameLoop()
-  }
+  if (state<GameState>().players.length === 0) queueGameStart()
   on(id, ACTIONS.OPEN, () => {
-    addPlayer(id)
-    update(state())
+    const current = state<GameState>()
+    addPlayer(id, current)
+    update(current)
   })
   on(id, ACTIONS.CLOSE, () => removePlayer(id))
   on(id, 'character', ({name, color}: any) => {
@@ -39,27 +32,41 @@ export function addClient(id: string) {
   on(id, 'reset-attack', () => (inputs.get(id) || {resetAttack: false}).resetAttack = true)
 }
 
-let wallEntities: Entity[] = []
-function resetGame() {
+function queueGameStart() {
   const current = state<GameState>()
-  current.round = uuid()
-  current.map = randomMap()
-  current.players = []
-  current.insults = []
-  current.scores = []
-  clients().map(addPlayer)
-  current.startTime = Date.now()
-  current.timeUntilEndGame = 60
-  wallEntities = buildWalls(current.map)
+  resetGame(current)
   update(current)
+  startGameLoop()
 }
 
-function addPlayer(id: string) {
-  const current = state<GameState>()
-  const {name, color} = current.characters[id] || { name: 'someone', color: 'green' }
-  const player = resetPlayer({ id, name, color }, current.map)
+const inputs = new Map<string, Input>()
+
+function resetGame(current: GameState) {
+  const map = randomMap()
+  const walls = buildWalls(map)
+  const polys = buildPolygons(map)
+  const collisionPolygons = walls.concat(polys)
+  Object.assign(current, {
+    round: uuid(),
+    map,
+    players: [],
+    insults: [],
+    scores: [],
+    pills: [],
+    startTime: Date.now(),
+    timeUntilEndGame: 60,
+    timeUntilNextGame: 0,
+    collisionPolygons
+  })
+  clients().map(id => addPlayer(id, current))
+}
+
+function addPlayer(id: string, current: GameState) {
+  const character = current.characters[id] || {}
+  const player = resetPlayer(id, {...character}, current.map, current.collisionPolygons)
+  const score = buildScore(player)
   current.players.push(player)
-  current.scores.push(buildScore(player))
+  current.scores.push(score)
 }
 
 function removePlayer(id: string) {
@@ -81,13 +88,11 @@ function startGameLoop() {
       current = advanceGame(current, step)
     }
   }, {
-    requestAnimationFrame: setImmediate,
-    cancelAnimationFrame: clearImmediate
+    requestAnimationFrame: setImmediate, // (cb) => setTimeout(cb, 1000/60),
+    cancelAnimationFrame: clearImmediate //clearTimeout
   })
 
-  const updateInterval = setInterval(() => {
-    update(state())
-  }, 1000/60)
+  const updateInterval = setInterval(() => update(state()), 1000/60)
 
   stopGameLoop = () => {
     stopLoop()
@@ -96,15 +101,15 @@ function startGameLoop() {
 }
 
 function advanceGame(current: GameState, step: number): GameState {
-  const newPills = tryToCreatePill(current.pills, current.map)
+  const newPills = tryToCreatePill(current.pills, current.map, current.collisionPolygons)
   current.pills = current.pills.concat(newPills)
   current.players.map(player => {
-    movePlayer(player, inputs.get(player.id), wallEntities, step)
+    movePlayer(player, inputs.get(player.id), current.collisionPolygons, step)
     current.pills = tryToConsumePills(player, current.pills)
     updateMode(player, inputs.get(player.id), step)
     hitOtherPlayers(player, current.players, current.scores, current.insults)
     advanceEffects(player, step)
-    advanceDeathTimer(player, current.map, step)
+    advanceDeathTimer(player, current.map, current.collisionPolygons, step)
   })
   current.insults.map(insult => insult.life -= step)
   current.insults = current.insults.filter(i => i.life > 0)
@@ -117,7 +122,7 @@ function advanceTimers(current: GameState, step: number): GameState {
   const timeToSwitch = current.timeUntilNextGame <= 0 && current.timeUntilEndGame <= 0
   const resultsAreVisible = current.timeUntilEndGame < current.timeUntilNextGame
   if (timeToSwitch) {
-    if (resultsAreVisible) resetGame()
+    if (resultsAreVisible) resetGame(current)
     else current.timeUntilNextGame = 15
   }
   return current
@@ -133,7 +138,8 @@ export const initialState: GameState = {
   insults: [],
   pills: [],
   characters: {},
-  map: randomMap()
+  map: randomMap(),
+  collisionPolygons: []
 }
 
 export function status() {

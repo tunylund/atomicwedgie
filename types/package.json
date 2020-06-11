@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "tiny-game-engine": "tunylund/tiny-game-engine",
+    "tiny-game-engine": "github:tunylund/tiny-game-engine",
     "typescript": "^3.9.3"
   },
   "author": "",
