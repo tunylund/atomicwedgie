@@ -162,7 +162,7 @@ function determineShadows(light: Light, poly: Polygon): Polygon[] {
         }
 
         //one extruded by the light direction
-        let l2p = normalize(sub(point, light.pos.cor))
+        let l2p = sub(point, light.pos.cor)//normalize(sub(point, light.pos.cor))
         shadowVertices[svCount + 1] = {
           x: light.pos.cor.x + l2p.x * shadowLength,
           y: light.pos.cor.y + l2p.y * shadowLength

@@ -3,6 +3,8 @@ import urlParser from 'url'
 import { start } from 'shared-state-server'
 import { initialState, addClient, status } from './game'
 import { preloadImages } from './maps'
+// import SegfaultHandler from 'segfault-handler'
+// SegfaultHandler.registerHandler('crash.log')
 
 const port = process.env.PORT || 8888
 
@@ -17,7 +19,8 @@ const httpServer = http.createServer((req, res) => {
       res.setHeader('Access-Control-Allow-Origin', '*')
       res.setHeader('Access-Control-Allow-Methods', ['GET', 'OPTIONS'])
       res.setHeader('Cache-Control', 'no-cache')
-      res.writeHead(200, { 'Content-type': 'application/json' })
+      res.setHeader('Cache-type', 'application/json')
+      res.writeHead(200)
       res.end(JSON.stringify(iceServers))
       break
 
@@ -25,7 +28,8 @@ const httpServer = http.createServer((req, res) => {
       res.setHeader('Access-Control-Allow-Origin', '*')
       res.setHeader('Access-Control-Allow-Methods', ['GET', 'OPTIONS'])
       res.setHeader('Cache-Control', 'no-cache')
-      res.writeHead(200, { 'Content-type': 'application/json' })
+      res.setHeader('Cache-type', 'application/json')
+      res.writeHead(200)
       res.end(JSON.stringify(status()))
       break
 

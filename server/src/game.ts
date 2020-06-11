@@ -88,8 +88,8 @@ function startGameLoop() {
       current = advanceGame(current, step)
     }
   }, {
-    requestAnimationFrame: setImmediate, // (cb) => setTimeout(cb, 1000/60),
-    cancelAnimationFrame: clearImmediate //clearTimeout
+    requestAnimationFrame: (cb) => setTimeout(cb, 1000/120),
+    cancelAnimationFrame: clearTimeout
   })
 
   const updateInterval = setInterval(() => update(state()), 1000/60)
