@@ -62,13 +62,13 @@ export default async function createGame() {
     const myId = await beginConnection(host)
     stopConnectMessage()
     let stop = startDrawingGame(myId)
-    document.addEventListener('visibilitychange', (ev) => {
-      if (document.hidden) {
-        stop()
-      } else {
-        stop = startDrawingGame(myId)
-      }
-    }, false);
+    // document.addEventListener('visibilitychange', (ev) => {
+    //   if (document.hidden) {
+    //     stop()
+    //   } else {
+    //     stop = startDrawingGame(myId)
+    //   }
+    // }, false);
 
     let hideError: (() => void)|null
     function onErrorChange(error?: Error) {
