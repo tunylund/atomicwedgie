@@ -3,8 +3,8 @@ import urlParser from 'url'
 import { start } from 'shared-state-server'
 import { initialState, addClient, status } from './game'
 import { preloadImages } from './maps'
-import SegfaultHandler from 'segfault-handler'
-SegfaultHandler.registerHandler('crash.log')
+// import SegfaultHandler from 'segfault-handler'
+// SegfaultHandler.registerHandler('crash.log')
 
 const port = process.env.PORT || 8888
 
