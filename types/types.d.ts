@@ -82,9 +82,10 @@ export interface Score {
 export interface Map {
   id: string,
   name: string,
-  tileSize: number,
-  tiles: string[],
+  tileSize: number
+  tiles: string[]
   floorAsset: AssetKey
+  music?: string
 }
 
 export const enum Asset {

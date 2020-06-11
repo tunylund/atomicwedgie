@@ -155,11 +155,11 @@ export function advanceDeathTimer(player: Player, map: Map, collisionPolygons: P
   }
 }
 
-export function resetPlayer(id: string, {name, color}: Partial<Player>, map: Map, collisionPolygons: Polygon[]): Player {
+export function resetPlayer(id: string, {name, color}: {name: string, color: string}, map: Map, collisionPolygons: Polygon[]): Player {
   return {
     id,
-    name: name || 'someone',
-    color: color || 'green',
+    name,
+    color,
     pos: position(getSpawnPoint(map, collisionPolygons, xyz(16, 16, 16))),
     dim: xyz(16, 16, 16),
     dir: vector(Math.PI * 2 * Math.random(), 1),

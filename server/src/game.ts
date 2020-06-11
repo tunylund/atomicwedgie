@@ -4,7 +4,6 @@ import { update, state, off, on, ACTIONS, clients } from 'shared-state-server'
 import { randomMap, buildWalls, buildPolygons } from './maps'
 import { tryToCreatePill, tryToConsumePills } from './pills'
 import { resetPlayer, buildScore, Input, advanceEffects, movePlayer, advanceDeathTimer, updateMode, hitOtherPlayers } from './players'
-import { clearImmediate } from 'timers'
 import { v4 as uuid } from 'uuid'
 
 export function addClient(id: string) {
@@ -12,7 +11,7 @@ export function addClient(id: string) {
   on(id, ACTIONS.OPEN, () => {
     const current = state<GameState>()
     addPlayer(id, current)
-    update(current)
+    update(current)   
   })
   on(id, ACTIONS.CLOSE, () => removePlayer(id))
   on(id, 'character', ({name, color}: any) => {
@@ -62,8 +61,8 @@ function resetGame(current: GameState) {
 }
 
 function addPlayer(id: string, current: GameState) {
-  const character = current.characters[id] || {}
-  const player = resetPlayer(id, {...character}, current.map, current.collisionPolygons)
+  const character = current.characters[id] || {name: 'someone', color: 'green'}
+  const player = resetPlayer(id, character, current.map, current.collisionPolygons)
   const score = buildScore(player)
   current.players.push(player)
   current.scores.push(score)
