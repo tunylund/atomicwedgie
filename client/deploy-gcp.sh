@@ -20,10 +20,12 @@ SOURCE_DIR=".deploy"
 BUCKET="atomicwedgie"
 
 gsutil -m rsync -d -r ${SOURCE_DIR} gs://${BUCKET}
-gsutil -m setmeta -r -h "Cache-Control:public, max-age=300" gs://${BUCKET}/**/*.html
-gsutil -m setmeta -r -h "Cache-Control:public, max-age=300" gs://${BUCKET}/**/*.js
-gsutil -m setmeta -r -h "Cache-Control:public, max-age=300" gs://${BUCKET}/**/*.js.map
-gsutil -m setmeta -r -h "Cache-Control:public, max-age=300" gs://${BUCKET}/**/*.css
-gsutil -m setmeta -r -h "Cache-Control:public, max-age=3600" gs://${BUCKET}/**/*.wav
+gsutil -m setmeta -r -h "Cache-Control:public, max-age=300" "gs://${BUCKET}/**.html"
+gsutil -m setmeta -r -h "Cache-Control:public, max-age=300" "gs://${BUCKET}/**.js"
+gsutil -m setmeta -r -h "Cache-Control:public, max-age=300" "gs://${BUCKET}/**.js.map"
+gsutil -m setmeta -r -h "Cache-Control:public, max-age=300" "gs://${BUCKET}/**.mjs"
+gsutil -m setmeta -r -h "Cache-Control:public, max-age=300" "gs://${BUCKET}/**.mjs.map"
+gsutil -m setmeta -r -h "Cache-Control:public, max-age=300" "gs://${BUCKET}/**.css"
+gsutil -m setmeta -r -h "Cache-Control:public, max-age=3600" "gs://${BUCKET}/**.wav"
 gsutil iam ch allUsers:objectViewer gs://${BUCKET}
 gsutil web set -m index.html gs://${BUCKET}
