@@ -20,6 +20,8 @@ function centerMapOrPlayerOrBindToEdge(availableSpace: number, mapSize: number, 
 }
 
 export function startDrawingGame(myId: string) {
+  on(ACTIONS.INIT, (id: string) => { myId = id })
+
   let shadowCaster: ShadowCaster = {
     round: '-1',
     layer: fixedSizeDrawingLayer(0, 0),
