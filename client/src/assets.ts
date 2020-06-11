@@ -80,7 +80,9 @@ enum Assets {
   [`arrgh-1`] = 'sounds/arrgh/1.wav',
   [`arrgh-2`] = 'sounds/arrgh/2.wav',
   [`arrgh-3`] = 'sounds/arrgh/3.wav',
-  [`arrgh-4`] = 'sounds/arrgh/4.wav'
+  [`arrgh-4`] = 'sounds/arrgh/4.wav',
+
+  crickets = 'sounds/BackgroundMusic/crickets1.mp3'
 }
 
 function preload(onAssetReady: (ready: number, expected: number) => void) {

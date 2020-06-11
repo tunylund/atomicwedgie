@@ -188,6 +188,7 @@ const maps: Map[] = [
     name: "The Arena 2 (2-4 players)",
     floorAsset: 'grass',
     tileSize: 16,
+    music: 'crickets',
     tiles: [
       ",-----------------------------------GgggGggg  ",
       "|                               GgggggggggGggg",
@@ -497,6 +498,7 @@ const maps: Map[] = [
     name: "outdoors (2-8)",
     floorAsset: 'grass',
     tileSize: 16,
+    music: 'crickets',
     tiles: [
       ",--------------------------------------.",
       "|                                      |",

@@ -18,6 +18,7 @@ const wedgied = releaseValve('wedgied', () => sound(`arrgh-${r(4)}`).start())
 const banzaid = releaseValve('banzaid', () => sound(`arrgh-${r(4)}`).start())
 const uliuli = releaseValve('uliuli', () => sound(`uliuliuli`).start())
 const nomnom = releaseValve('nomnom', () => sound(`pill-${r(3)}`).start())
+const crickets = releaseValve('crickets', () => sound('crickets').start(), 60000)
 
 const valves = new Map<string, boolean>()
 function releaseValve(id: string, fn: any, timeout = 300) {
@@ -58,6 +59,10 @@ export function playEffects(player: Player) {
       else nomnom()
     })
   effects = player.effects.map(fx => fx.type)
+}
+
+export function playMusic(name: string) {
+  if (name === 'crickets') crickets()
 }
 
 export function playSteps(protagonist: Player, players: Player[]) {
