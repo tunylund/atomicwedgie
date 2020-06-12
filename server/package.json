@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "jimp": "^0.13.0",
-    "shared-state-server": "^0.1.5",
+    "shared-state-server": "^0.2",
     "tiny-game-engine": "github:tunylund/tiny-game-engine",
     "uuid": "^8.1.0"
   }

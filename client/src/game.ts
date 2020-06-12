@@ -2,10 +2,10 @@ import { loop, draw, xyz, zero, fixedSizeDrawingLayer } from 'tiny-game-engine/l
 import { drawHud } from './ui'
 import { drawMap } from './maps'
 import { drawPlayers, animatePlayers } from './players'
-import { drawShadows, buildShadowCaster, ShadowCaster, drawShadowCasters } from './shadows'
+import { drawShadows, buildShadowCaster, ShadowCaster } from './shadows'
 import { drawPills } from './pills'
 import { GameState, Player, Score } from '../../types/types'
-import { state, ACTIONS, on, statistics } from 'shared-state-client/dist/index'
+import { state, ACTIONS, on } from 'shared-state-client/dist/index'
 import { drawScores } from './results'
 import { playModeChanges, playSteps, playEffects, playMusic } from './sounds'
 
@@ -61,7 +61,7 @@ export function startDrawingGame(myId: string) {
     drawPills(pills, offset, shadowCaster)
     drawPlayers(myId, players, offset, shadowCaster)
     drawShadows(shadowCaster, offset)
-    drawHud(timeUntilEndGame, scores, myId, insults, statistics(), players)
+    drawHud(timeUntilEndGame, scores, myId, insults, players)
     tryDrawResults(timeUntilNextGame, scores)
   })
 
