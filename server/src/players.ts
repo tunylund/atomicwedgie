@@ -3,15 +3,15 @@ import { position, xyz, vector, move, vectorTo, zero, Entity, distance, Polygon,
 import { Player, Map, Modes, Score, EffectType, Insult } from "../../types/types";
 import { banzaid, quote, wedgied } from "./texts";
 
-const turnSpeed = 6,
-      walkSpeed = 100,
-      banzaiWalkSpeed = 70,
+const turnSpeed = 6 / 1000,
+      walkSpeed = 100 / 1000,
+      banzaiWalkSpeed = 70 / 1000,
       banzaiDistance = 48,
       wedgieDistance = 32,
       minDistance = 12,
       banzaiAngle = 45,
-      banzaidDuration = 5,
-      wedgiedDuration = 4
+      banzaidDuration = 5 / 1000,
+      wedgiedDuration = 4 / 1000
 
 export function buildScore({id, name}: Player): Score {
   return {
@@ -81,9 +81,9 @@ export function updateMode(player: Player, input: Input = defaultInput, step: nu
 
 export function hitOtherPlayers(player: Player, players: Player[], scores: Score[], insults: Insult[]) {
   const { isAttacking, isInBanzai } = getFlags(player)
-  if (isAttacking && player.attackDuration < 1) {
+  if (isAttacking && player.attackDuration < 1000) {
     if (isInBanzai) {
-      if (player.attackDuration > 0.375) {
+      if (player.attackDuration > 0.375 * 1000) {
         players.filter(other => (
           other.id !== player.id
           && !getFlags(other).isDead
@@ -108,7 +108,7 @@ export function hitOtherPlayers(player: Player, players: Player[], scores: Score
             life: 5
           })
         })
-        player.attackDuration = 2
+        player.attackDuration = 2 * 1000
       }
     } else {
       players.filter(other => (
@@ -135,7 +135,7 @@ export function hitOtherPlayers(player: Player, players: Player[], scores: Score
           life: 5
         })
       })
-      player.attackDuration = 2
+      player.attackDuration = 2 * 1000
     }
   }
 }

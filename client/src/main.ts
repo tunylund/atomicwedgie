@@ -89,7 +89,7 @@ export default async function createGame() {
         banzaiSwich: controls.keys.KeyS || controls.keys.KeyC
       })
     })
-  } catch (err) {
+  } catch (err: any) {
     showError(err)
   }
 }

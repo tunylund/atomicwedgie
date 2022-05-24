@@ -1,7 +1,7 @@
 import http from 'http'
 import urlParser from 'url'
 import { start } from 'shared-state-server'
-import { initialState, addClient, status } from './game'
+import { addClient, status, newGameState } from './game'
 import { preloadImages } from './maps'
 // import SegfaultHandler from 'segfault-handler'
 // SegfaultHandler.registerHandler('crash.log')
@@ -46,7 +46,7 @@ const iceServers = JSON.parse(process.env.ICE_SERVERS || '[]')
 console.log(`using iceServers: ${JSON.stringify(iceServers)}`)
 
 preloadImages(clientUrl).then(() => {
-  start(httpServer, initialState, addClient, { iceServers })
+  start(httpServer, newGameState(), addClient, { iceServers })
   httpServer.listen(port)
   console.log(`Server running at http://127.0.0.1:${port}/`)
 }).catch(err => {

@@ -42,22 +42,25 @@ const inputs = new Map<string, Input>()
 
 function resetGame(current: GameState) {
   const map = randomMap()
-  const walls = buildWalls(map)
-  const polys = buildPolygons(map)
-  const collisionPolygons = walls.concat(polys)
-  Object.assign(current, {
-    round: uuid(),
-    map,
-    players: [],
-    insults: [],
-    scores: [],
-    pills: [],
-    startTime: Date.now(),
-    timeUntilEndGame: 60,
-    timeUntilNextGame: 0,
-    collisionPolygons
-  })
+  Object.assign(current, newGameState())
   clients().map(id => addPlayer(id, current))
+}
+
+export function newGameState(): GameState {
+  const map = randomMap()
+  return {
+    round: uuid(),
+    startTime: Date.now(),
+    timeUntilEndGame: 60 * 1000,
+    timeUntilNextGame: 0,
+    players: [],
+    scores: [],
+    insults: [],
+    pills: [],
+    characters: {},
+    map,
+    collisionPolygons: buildWalls(map).concat(buildPolygons(map))
+  }
 }
 
 function addPlayer(id: string, current: GameState) {
@@ -83,6 +86,7 @@ function startGameLoop() {
 
   const stopLoop = loop((step, gameTime) => {
     let current = advanceTimers(state<GameState>(), step)
+    console.log(current.round, current.timeUntilNextGame, current.timeUntilEndGame, step, gameTime)
     if (current.timeUntilEndGame > 0) {
       current = advanceGame(current, step)
     }
@@ -122,23 +126,9 @@ function advanceTimers(current: GameState, step: number): GameState {
   const resultsAreVisible = current.timeUntilEndGame < current.timeUntilNextGame
   if (timeToSwitch) {
     if (resultsAreVisible) resetGame(current)
-    else current.timeUntilNextGame = 15
+    else current.timeUntilNextGame = 15 * 1000
   }
   return current
-}
-
-export const initialState: GameState = {
-  round: '',
-  startTime: 0,
-  timeUntilEndGame: 60,
-  timeUntilNextGame: 0,
-  players: [],
-  scores: [],
-  insults: [],
-  pills: [],
-  characters: {},
-  map: randomMap(),
-  collisionPolygons: []
 }
 
 export function status() {

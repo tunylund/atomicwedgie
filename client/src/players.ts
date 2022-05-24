@@ -117,7 +117,7 @@ export function animatePlayers(players: Player[], step: number) {
     const animation = playerAnimations.get(player.id)
 
     if (animation && animation.modeCount === player.modeCount) {
-      animation.frameSequence.step(step)
+      animation.frameSequence.step(step / 1000)
       if (getFlags(player).isAttacking && animation.frameSequence.finished) send('reset-attack')
     } else {
       playerAnimations.set(player.id, {

@@ -18,6 +18,7 @@ function getTimer(timeUntilNextGame: number) {
 
 function getHighestScore(scores: Score[]) {
   const score = scores.sort((a, b) => b.score - a.score)[0]
+  if (score.score === 0) return `<div class='score'><span class='score-value'>No highest score on this round :?</span></div>`
   return `<div class='score'>
           <span class='score-label'>Highest Score: </span>${score.name || '-- unknown --'}<br>
           with <span class='score-value'>${score.wedgieCount}</span> wedgies and
@@ -28,6 +29,7 @@ function getHighestScore(scores: Score[]) {
 
 function getMostWedgied(scores: Score[]) {
   const score = scores.sort((a, b) => b.wedgiedCount - a.wedgiedCount)[0]
+  if (score.wedgiedCount === 0) return `<div class='score'><span class='score-value'>No wedgies were performed on this round :(</span></div>`
   return `<div class='score'>
           <span class='score-label'>Most Wedgied: </span> ${score.name}<br>
           with <span class='score-value'>${score.wedgiedCount}</span> ${badAdjective()} wedgies pulled on them
@@ -40,16 +42,16 @@ function getScores(scores: Score[]) {
     ${sortedScores.map(score => {
       return `<tr>
         <td>${score.name || '-- unknown --'}</td>
-        <td><span class='score-value'>${score.wedgieCount}</span> wedgies</td>
-        <td><span class='score-value'>${score.banzaiCount}</span> banzais</td>
-        <td><span class='score-value'> = ${score.score}</span></td>
+        <td>wedgies <span class='score-value'>${score.wedgieCount}</span></td>
+        <td>banzais <span class='score-value'>${score.banzaiCount}</span></td>
+        <td><span class='score-value'>${score.score || '--'}</span></td>
       </tr>`
     }).join("")}
   </table>`
 }
 
 export function drawScores(timeUntilNextGame: number, scores: Score[]) {
-  const {timer, timerInterval} = getTimer(timeUntilNextGame)
+  const {timer, timerInterval} = getTimer(Math.floor(timeUntilNextGame / 1000))
   const frag = document.createElement('div')
   frag.className = 'score-container'
   frag.innerHTML = `<div class='score-table'>

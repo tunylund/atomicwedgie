@@ -6,7 +6,7 @@ function drawTime(timeUntilEndGame: number) {
   draw((ctx, cw, ch) => {
     ctx.font = '12px Arial'
     ctx.fillStyle = 'white'
-    ctx.fillText(`time left: ${Math.max(Math.floor(timeUntilEndGame), 0)}`, -cw + 15, -ch + 25)
+    ctx.fillText(`time left: ${Math.max(Math.floor(timeUntilEndGame / 1000), 0)}`, -cw + 15, -ch + 25)
   })
 }
 

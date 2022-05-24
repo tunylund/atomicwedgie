@@ -1,4 +1,4 @@
-import { loop, draw, xyz, zero, fixedSizeDrawingLayer } from 'tiny-game-engine/lib/index'
+import { loop, draw, xyz, zero, buildLayer } from 'tiny-game-engine/lib/index'
 import { drawHud } from './ui'
 import { drawMap } from './maps'
 import { drawPlayers, animatePlayers } from './players'
@@ -24,7 +24,7 @@ export function startDrawingGame(myId: string) {
 
   let shadowCaster: ShadowCaster = {
     round: '-1',
-    layer: fixedSizeDrawingLayer(0, 0),
+    layer: buildLayer(0, 0),
     casters: [],
     lights: [],
   }

@@ -1,5 +1,7 @@
 #!/bin/sh
 set -e
 
-docker build -t atomicwedgie-turn .
-docker run --network=host atomicwedgie-turn
+docker run -d --network=host coturn/coturn
+
+# docker build -t atomicwedgie-turn .
+# docker run --network=host atomicwedgie-turn

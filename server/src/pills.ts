@@ -33,7 +33,7 @@ function buildPill(map: Map, collisionPolygons: Polygon[]): Pill {
   return {
     id: uuid(),
     asset: `pill-${type}` as AssetKey,
-    effectDuration: 8,
+    effectDuration: 8 * 1000,
     type,
     pos: position(getSpawnPoint(map, collisionPolygons, xyz(16, 16, 16))),
     dim: xyz(16, 16, 16),

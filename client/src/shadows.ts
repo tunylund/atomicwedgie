@@ -1,5 +1,5 @@
 import { getAsset } from './assets'
-import { fixedSizeDrawingLayer, draw, position, Entity, xyz, XYZ, zero, Layer, negone, mul, Polygon, sub } from 'tiny-game-engine/lib/index'
+import { buildLayer, draw, position, Entity, xyz, XYZ, zero, Layer, negone, mul, Polygon, sub } from 'tiny-game-engine/lib/index'
 import { Map } from '../../types/types'
 import { buildWallPolygons, buildPolygons } from './maps'
 
@@ -10,7 +10,7 @@ interface Light extends Entity {
 
 function buildLights(): Light[] {
   const image = getAsset<HTMLImageElement>('lightCone')
-  const layer = fixedSizeDrawingLayer(image.width * 2, image.height * 2)
+  const layer = buildLayer(image.width * 2, image.height * 2)
   return [{
     pos: position(),
     dir: zero,
@@ -28,7 +28,7 @@ interface ShadowCaster {
 
 function buildShadowCaster(map: Map, round: string): ShadowCaster {
   const casters = buildWallPolygons(map).concat(buildPolygons(map))
-  const layer = fixedSizeDrawingLayer(
+  const layer = buildLayer(
     map.tiles[0].length * map.tileSize,
     map.tiles.length * map.tileSize
   )

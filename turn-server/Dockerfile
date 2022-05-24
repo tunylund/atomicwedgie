@@ -1,2 +1,2 @@
-FROM instrumentisto/coturn
+FROM coturn/coturn
 COPY turnserver.conf .
