@@ -4,21 +4,22 @@ import { getAsset } from "./assets"
 import { distance, AudioBuilder } from "tiny-game-engine/lib/index"
 
 const r = (max: number) => Math.ceil(Math.random()*max)
-const sound = (key: string) => getAsset<AudioBuilder>(key as AssetKey)()
+const sound = (key: string, volume: number) => getAsset<AudioBuilder>(key as AssetKey)(volume)
 
-const insult = releaseValve('insult', () => sound(`laugh-${r(6)}`).start())
-const walk = () => sound(`walk-${r(3)}`).start()
-const wedgie = releaseValve('wedgie', () => sound(`performWedgie-${r(4)}`).start())
+let volume = 0.2
+const insult = releaseValve('insult', () => sound(`laugh-${r(6)}`, volume * 0.5).start())
+const walk = () => sound(`walk-${r(3)}`, volume).start()
+const wedgie = releaseValve('wedgie', () => sound(`performWedgie-${r(4)}`, volume * 0.5).start())
 const banzai = releaseValve('banzai', () => {
-  const s = sound(`performBanzai-${r(3)}`)
+  const s = sound(`performBanzai-${r(3)}`, volume * 0.5)
   s.start(s.context.currentTime + 0.4)
 })
-const clubsOut = releaseValve('clubsOut', () => sound(`banzaiScream-${r(3)}`).start())
-const wedgied = releaseValve('wedgied', () => sound(`arrgh-${r(4)}`).start())
-const banzaid = releaseValve('banzaid', () => sound(`arrgh-${r(4)}`).start())
-const uliuli = releaseValve('uliuli', () => sound(`uliuliuli`).start())
-const nomnom = releaseValve('nomnom', () => sound(`pill-${r(3)}`).start())
-const crickets = releaseValve('crickets', () => sound('crickets').start(), 60000)
+const clubsOut = releaseValve('clubsOut', () => sound(`banzaiScream-${r(3)}`, volume * 0.5).start())
+const wedgied = releaseValve('wedgied', () => sound(`arrgh-${r(4)}`, volume * 0.5).start())
+const banzaid = releaseValve('banzaid', () => sound(`arrgh-${r(4)}`, volume * 0.5).start())
+const uliuli = releaseValve('uliuli', () => sound(`uliuliuli`, volume * 0.5).start())
+const nomnom = releaseValve('nomnom', () => sound(`pill-${r(3)}`, volume * 0.5).start())
+const crickets = releaseValve('crickets', () => sound('crickets', volume * 0.5).start(), 60000)
 
 const valves = new Map<string, boolean>()
 function releaseValve(id: string, fn: any, timeout = 300) {
@@ -69,8 +70,12 @@ export function playSteps(protagonist: Player, players: Player[]) {
   if (protagonist.pos.vel.size > 0) releaseValve(protagonist.id, walk)()
   players.filter(p => p.id !== protagonist.id).map(player => {
     if (player.pos.vel.size > 0) {
+      const cutoffDistance = 200
       const d = distance(player, protagonist)
-      if (d < 200) releaseValve(player.id, walk)()
+      const volumeByDistance = volume * (1 - d / cutoffDistance)
+      if (d < cutoffDistance) {
+        releaseValve(player.id, () => sound(`walk-${r(3)}`, volumeByDistance).start())()
+      }
     }
   })
 }

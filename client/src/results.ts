@@ -20,10 +20,7 @@ function getHighestScore(scores: Score[]) {
   const score = scores.sort((a, b) => b.score - a.score)[0]
   if (score.score === 0) return `<div class='score'><span class='score-value'>No highest score on this round :?</span></div>`
   return `<div class='score'>
-          <span class='score-label'>Highest Score: </span>${score.name || '-- unknown --'}<br>
-          with <span class='score-value'>${score.wedgieCount}</span> wedgies and
-          <span class='score-value'>${score.banzaiCount}</span> ${goodAdjective()} banzais<br>
-          totaling to <span class='score-value'>${score.score}</span> points.
+          <span class='score-label'>Highest Score: </span>${score.name || '-- unknown --'}
         </div>`
 }
 
@@ -44,7 +41,7 @@ function getScores(scores: Score[]) {
         <td>${score.name || '-- unknown --'}</td>
         <td>wedgies <span class='score-value'>${score.wedgieCount}</span></td>
         <td>banzais <span class='score-value'>${score.banzaiCount}</span></td>
-        <td><span class='score-value'>${score.score || '--'}</span></td>
+        <td>score <span class='score-value'>${score.score || '--'}</span></td>
       </tr>`
     }).join("")}
   </table>`
