@@ -10,8 +10,8 @@ const turnSpeed = 6 / 1000,
       wedgieDistance = 32,
       minDistance = 12,
       banzaiAngle = 45,
-      banzaidDuration = 5 / 1000,
-      wedgiedDuration = 4 / 1000
+      banzaidDuration = 5 * 1000,
+      wedgiedDuration = 4 * 1000
 
 export function buildScore({id, name}: Player): Score {
   return {

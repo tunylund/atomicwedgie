@@ -86,7 +86,6 @@ function startGameLoop() {
 
   const stopLoop = loop((step, gameTime) => {
     let current = advanceTimers(state<GameState>(), step)
-    console.log(current.round, current.timeUntilNextGame, current.timeUntilEndGame, step, gameTime)
     if (current.timeUntilEndGame > 0) {
       current = advanceGame(current, step)
     }
